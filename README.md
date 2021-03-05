@@ -16,7 +16,7 @@ vault.bitwarden.lan
 You need to setup Podman 3.0 on host machine.
 Your firewall is configured to accept connection on port 80,443
 
-Si SELinux is active consider apply this settings
+if SELinux is active consider apply this settings
 
 #SELinux
 semanage fcontext -a -t fusefs_t '/data(/.*)?'
