@@ -6,7 +6,6 @@ ADD layer.tar /
 
 #System update
 RUN dnf -y upgrade dnf libmodulemd; dnf -y upgrade-minimal --security --bugfix --nodocs 
-#RUN dnf -y upgrade 
 #Install apache
 RUN dnf -y install httpd mod_ssl openssl mkpasswd
 
@@ -32,7 +31,7 @@ RUN git clone https://github.com/dani-garcia/bitwarden_rs.git /tmp/bitwarden; \
 RUN git clone https://github.com/bitwarden/web.git /tmp/vault; \
 cd /tmp/vault; \
 tag="$(git tag -l "v2.18*" | tail -n1)"; export tag; echo "Selected tag version is ${tag}"; \
-git checkout $tag
+git checkout ${tag}
 RUN curl -Lo /tmp/vault/v2.18.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.18.0.patch; \
 git -C /tmp/vault apply /tmp/vault/v2.18.0.patch
 RUN npm run sub:init --prefix /tmp/vault;npm install --prefix /tmp/vault
@@ -41,7 +40,7 @@ RUN npm audit fix --prefix /tmp/vault;npm run dist --prefix /tmp/vault
 
 #Create bitwarden user and admin container manager
 RUN adduser --system --shell /bin/false --comment "Bitwarden RS server" --user-group -M bitwarden
-RUN user_password="$(tr -cd [:alnum:] < /dev/urandom | fold -w 16 | head -n 1)";export user_password; adduser --shell /bin/bash --comment "Admin RS server" --user-group -G wheel -m --password $(mkpasswd -H md5 $user_password) admin;echo "Admin RS Password is ${user_password}"
+RUN user_password="$(tr -cd [:alnum:] < /dev/urandom | fold -w 16 | head -n 1)";export user_password; adduser --shell /bin/bash --comment "Admin RS server" --user-group -G wheel -m --password $(mkpasswd -H md5 ${user_password}) admin;echo "Admin RS Password is ${user_password}"
 
 #Create Directory Structure
 RUN mkdir -p {/var/lib/bitwarden/{data,log},/var/log/bitwarden,/etc/bitwarden,/home/admin/.ssl}; \
@@ -75,13 +74,11 @@ openssl x509 -req -outform PEM -CAcreateserial \
 -CAkey /home/admin/.ssl/CA-Bitwarden.key \
 -out /etc/pki/tls/certs/bitwarden.pem
 
-#Set fFile permissions
+#Set fFile permissions and add CA to SSL store
 RUN chmod 440 /etc/pki/tls/private/bitwarden.key; \
 chmod 644 /etc/pki/tls/certs/bitwarden.pem ; \
 chmod 440 /home/admin/.ssl/CA-Bitwarden.key; \
 chmod 644 /home/admin/.ssl/CA-Bitwarden.pem; \
-
-Add CA to SSL store
 cp /home/admin/.ssl/CA-Bitwarden.pem /etc/pki/ca-trust/source/anchors/; \
 update-ca-trust
 
