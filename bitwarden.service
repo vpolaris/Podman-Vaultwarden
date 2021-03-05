@@ -1,0 +1,26 @@
+[Unit]
+Description=Bitwarden RS server
+Documentation=https://github.com/dani-garcia/bitwarden_rs
+After=network.target
+
+[Service]
+LimitMEMLOCK=infinity
+LimitNOFILE=65535
+LimitNPROC=64
+RestartSec=2s
+Type=simple
+User=bitwarden
+Group=bitwarden
+WorkingDirectory=/etc/bitwarden
+ExecStart=/usr/local/bin/bitwarden
+Restart=always
+EnvironmentFile=/etc/bitwarden/.env
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+NoNewPrivileges=true
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
