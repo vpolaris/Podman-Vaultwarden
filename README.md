@@ -20,8 +20,11 @@ Si SELinux is active consider apply this settings
 
 #SELinux
 semanage fcontext -a -t fusefs_t '/data(/.*)?'
+
 setsebool -P virt_sandbox_use_netlink 1
+
 setsebool -P httpd_can_network_connect on
+
 setsebool -P container_manage_cgroup true
 
 Build Command.
@@ -37,6 +40,10 @@ the /data must exist on the host machine to preserve customer's vaultd during co
 Go to container shell
 
 podman exec -ti bitwarden /bin/bash
+
+Access to bitwarden via the link
+https://vault.bitwarden.lan
+
 
 Sources:
 https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/
