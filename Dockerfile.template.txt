@@ -7,11 +7,9 @@ ARG admpass
 ADD layer.tar / 
 
 #System update
-RUN dnf makecache
-RUN dnf -y upgrade dnf rpm libmodulemd $DNFOPTION; \
-#dnf -y upgrade --security $DNFOPTION; \
-#dnf -y upgrade --bugfix $DNFOPTION
-dnf -y upgrade $DNFOPTION
+RUN dnf makecache; \
+dnf -y upgrade dnf rpm libmodulemd $DNFOPTION; \
+dnf -y upgrade-minimal $DNFOPTION
 
 #Install apache
 
@@ -77,11 +75,11 @@ chown -R apache:apache /var/www/vault/ /var/lib/bitwarden/logs/httpd
 RUN openssl req -new -x509 -nodes -days 7300 -outform PEM -newkey rsa:4096 -sha256 \
 -keyout /home/admin/.ssl/CA-Bitwarden.key \
 -out /home/admin/.ssl/CA-Bitwarden.pem \
--subj "/CN=CA Bitwarden/emailAddress=admin@vault.bitwarden.lan/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
+-subj "/CN=CA Bitwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
 openssl req -nodes -newkey rsa:2048 -sha256 \
 -keyout /etc/pki/tls/private/bitwarden.key \
 -out /home/admin/.ssl/bitwarden.csr \
--subj "/CN=vault.bitwarden.lan/emailAddress=admin@vault.bitwarden.lan/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
+-subj "/CN=vault.bitwarden.lan/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
 openssl x509 -req -outform PEM -CAcreateserial \
 -in /home/admin/.ssl/bitwarden.csr \
 -CA /home/admin/.ssl/CA-Bitwarden.pem \
@@ -111,7 +109,7 @@ RUN systemctl enable bitwarden.service
 CMD ["/usr/sbin/init"]
 
 EXPOSE 80
-EXPOSE 443
+EXPOSE ${HTTPS}
 
 #Clean up
 RUN rm -f /tmp/sh.rustup.rs /tmp/setup_14.x; \

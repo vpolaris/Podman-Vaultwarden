@@ -1,4 +1,4 @@
-Listen 443 https
+Listen ${HTTPS} https
 
 
 SSLPassPhraseDialog exec:/usr/libexec/httpd-ssl-pass-dialog
@@ -18,7 +18,7 @@ Header always set Referrer-Policy no-referrer
 
 SSLStaplingCache "shmcb:logs/ssl_stapling(32768)"
 
-<VirtualHost _default_:443>
+<VirtualHost _default_:${HTTPS}>
 
 
 ErrorLog /var/lib/bitwarden/logs/httpd/ssl_error_log
