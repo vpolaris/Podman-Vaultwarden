@@ -1,14 +1,14 @@
 <VirtualHost *:80>
-    ServerName vault.bitwarden.lan:80
+    ServerName ${DOMAIN}:80
     RewriteEngine On
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 </VirtualHost>
 
 <VirtualHost *:443>
-    ServerName  vault.bitwarden.lan:443
-    ServerAlias  vault.bitwarden.lan
-    ServerAdmin admin@vault.bitwarden.lan
+    ServerName  ${DOMAIN}:${HTTPS}
+    ServerAlias  ${DOMAIN}
+    ServerAdmin admin@${DOMAIN}
 
     SSLCertificateFile /etc/pki/tls/certs/bitwarden.pem
     SSLCertificateKeyFile /etc/pki/tls/private/bitwarden.key
