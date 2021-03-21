@@ -132,12 +132,12 @@ read -e -p "Enter your answer " -i "y" VALIDATE
 case "${VALIDATE}" in
 	"y")
 	printf "Executed Command :\n"
-	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project\n"
+	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project/Dockerfile\n"
 	sudo su - bitwarden -c "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project/Dockerfile"
 	;;
 	"n")
 	printf "to launch your built run the following command :\n"
-	printf "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f Dockerfile"
+	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project/Dockerfile\n"
 	exit 0
 	;;
 	*)
@@ -145,9 +145,17 @@ case "${VALIDATE}" in
 	exit 1
 	;;
 esac
-#FILENAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-bitwarden.${VERSION}.oci
-#podman image save --format oci-archive -o /tmp/"${FILENAME}" localhost/"${TAGNAME}"
-#chown bitwarden: /tmp/"${FILENAME}"
-#sudo -u bitwarden podman image load -i /tmp/"${FILENAME}"
-#sudo -u bitwarden podman run -d --systemd=always --log-driver=journald --log-opt=tag=bitwarden --sdnotify=conmon --name bitwarden -h bitwarden.lan -v ${DATADIR}/bitwarden/bitwarden:/var/lib/bitwarden:rw -p 443:443 localhost/"${TAGNAME}"
 
+FILENAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-bitwarden.${VERSION}.oci
+printf "Saving image file under ${DATADIR}bitwarden/project/${FILENAME}\n"
+sudo su - bitwarden -c "podman image save --format oci-archive -o ${DATADIR}bitwarden/project/${FILENAME} localhost/${TAGNAME}"
+printf "Launching image file ${DATADIR}bitwarden/project/${FILENAME}\n"
+sudo su - bitwarden -c "podman run -d --systemd=always --log-driver=journald --log-opt=tag=bitwarden --sdnotify=conmon --name bitwarden -h bitwarden.lan -v ${DATADIR}/bitwarden/bitwarden:/var/lib/bitwarden:Z -p 443:443 localhost/${TAGNAME}"
+printf "Generating systemd service file\n"
+sudo su - bitwarden -c "podman generate systemd -f -n bitwarden --restart-policy=always"
+printf "Starting systemd container-bitwarden.service as user bitwarden\n"
+cp  /home/bitwarden/container-bitwarden.service /etc/systemd/user/
+sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl daemon-reload --user"
+sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user enable /etc/systemd/user/container-bitwarden.service"
+sudo su - bitwarden -c "podman container stop bitwarden"
+sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user start /etc/systemd/user/container-bitwarden.service"
