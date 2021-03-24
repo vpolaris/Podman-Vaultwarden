@@ -83,14 +83,16 @@ openssl req -new -x509 -nodes -days 7300 -outform PEM -newkey rsa:4096 -sha256 \
 -out /home/admin/.ssl/CA-Bitwarden.pem \
 -subj "/CN=CA Bitwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
 cp /home/admin/.ssl/CA-Bitwarden.* /var/lib/bitwarden/certs; \
-else cp /var/lib/bitwarden/certs/CA-Bitwarden.pem /home/admin/.ssl/CA-Bitwarden.pem; \
-cp /var/lib/bitwarden/certs/CA-Bitwarden.key /home/admin/.ssl/CA-Bitwarden.key; fi
+else cp /var/lib/bitwarden/certs/CA-Bitwarden.pem /home/admin/.ssl/CA-Bitwarden.pem; fi
 
-RUN if ! [ -f  "/var/lib/bitwarden/certs/bitwarden.csr" ]; then \
+RUN if [ -f  "/var/lib/bitwarden/certs/CA-Bitwarden.key" ]; then \
+cp /var/lib/bitwarden/certs/CA-Bitwarden.key /home/admin/.ssl/CA-Bitwarden.key;fi
+
+RUN if ! [ -f  "/var/lib/bitwarden/certs/bitwarden.pem" ]; then \
 openssl req -nodes -newkey rsa:2048 -sha256 \
 -keyout /etc/pki/tls/private/bitwarden.key \
 -out /home/admin/.ssl/bitwarden.csr \
--subj "/CN=vault.bitwarden.lan/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
+-subj "/CN=${DOMAIN}/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; \
 cp /home/admin/.ssl/bitwarden.csr /var/lib/bitwarden/certs; \
 cp /etc/pki/tls/private/bitwarden.key /var/lib/bitwarden/certs; \
 else cp /var/lib/bitwarden/certs/bitwarden.csr /home/admin/.ssl/bitwarden.csr; \
@@ -108,10 +110,13 @@ else cp /var/lib/bitwarden/certs/bitwarden.pem /etc/pki/tls/certs/bitwarden.pem;
 #Set file permissions and add CA to SSL store
 RUN chmod 440 /etc/pki/tls/private/bitwarden.key; \
 chmod 644 /etc/pki/tls/certs/bitwarden.pem ; \
-chmod 440 /home/admin/.ssl/CA-Bitwarden.key; \
 chmod 644 /home/admin/.ssl/CA-Bitwarden.pem; \
 cp /home/admin/.ssl/CA-Bitwarden.pem /etc/pki/ca-trust/source/anchors/; \
 update-ca-trust
+
+RUN if [ -f  "/home/admin/.ssl/CA-Bitwarden.key" ]; then \
+chmod 440 /home/admin/.ssl/CA-Bitwarden.key;fi
+
 
 #Service's configuration
 
@@ -139,4 +144,6 @@ rm -rf ~/.config/ ~/.node-gyp/ ~/.npm ~/anaconda-* ~/original-ks.cfg; \
 dnf -y remove nodejs git gcc openssl-devel python2 --setopt=clean_requirements_on_remove=1; \
 dnf -y autoremove; \
 dnf clean all
+
+RUN touch /var/lib/bitwarden/build.completed
 
