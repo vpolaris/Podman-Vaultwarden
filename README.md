@@ -126,13 +126,21 @@ you can monitor the httpd service through 4 log files located under the director
 + ssl_access_log record all ssl/tls attempts
 + ssl_error_log record all ssl failures
 
+## Ressource Control
+the maximum amount of memory was fixed at 300MB, 150MB for the application and 150MB for system, allocated CPU has been set to 25% for application.
+That'suit well a familly needs. for groups of 10 or more users you may to tune this values
+for application the file to adjust is service/bitwarden-httpd.slice and for system you can set the value inservice/memorymax.conf. Normally the memory used is arround 120MB on the host in normal operation mode
+
+
 ## Sources: 
 I found my inspiration from these web site
-+https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
-+https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
 
-Ressource Control Group and Timer
-+https://medium.com/horrible-hacks/using-systemd-as-a-better-cron-a4023eea996d
+** For Bitwarden RS and the vault combined **
++ https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
++ https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
+
+** Ressource Control Group and Timer **
++ https://medium.com/horrible-hacks/using-systemd-as-a-better-cron-a4023eea996d
 
 ## License
 
