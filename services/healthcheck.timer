@@ -1,0 +1,10 @@
+[Unit]
+Description=Run healthcheck every 15 minutes
+Requires=healthcheck.service
+[Timer]
+Unit=healthcheck.service
+OnUnitInactiveSec=15m
+#RandomizedDelaySec=15m
+AccuracySec=1s
+[Install]
+WantedBy=timers.target

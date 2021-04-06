@@ -1,0 +1,10 @@
+
+[Unit]
+Description=Resource control for bitwarden and http service
+DefaultDependencies=no
+Before=slices.target
+[Slice]
+#Add 5% CPU per 50 users added 
+CPUQuota=25%
+#Add 5M per 20 users added 
+MemoryLimit=150M
