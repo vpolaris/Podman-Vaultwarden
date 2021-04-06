@@ -3,7 +3,7 @@
 
 [![N|Solid](https://raw.githubusercontent.com/containers/podman/master/logo/podman-logo.png)](https://podman.io/getting-started/)
 
-This project want to build a podman container to host a complete solution of [Bitwarden RS API][bitwarden-rs] and a [Web vault][Web-vault]: interface. which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
+This project want to build a podman container to host a complete solution of [Bitwarden RS API][bitwarden-rs] and a [Web vault][Web-vault]: interface. Which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
 
 - Podman don't need a daemon to run a container 
 - Bitwarden RS API don't need to be register
@@ -19,7 +19,7 @@ Make sure you can do the difference between the official clients and the Web Vau
 - Token and password are automatically generated
 - Full automation process
 
-Podman can be used in almost all modern linux distribution even in [WSL2].Fedora like (CentOS, Red Hat) or Debian like (Ubuntu, Raspian) are well supported. Running Bitwarden RS with its own web server make this solution highly portable and secure because you can run the container without root privileges. System administrators will appreciate the fact that the two services will be handled by systemd with all the capabilities associate to this init manager
+Podman can be used in almost all modern linux distribution even in [WSL2]. Fedora like (CentOS, Red Hat) or Debian like (Ubuntu, Raspian) are well supported. Running Bitwarden RS with its own web server make this solution highly portable and secure because you can run the container without root privileges. System administrators will appreciate the fact that the two services will be handled by systemd with all the capabilities associate to this init manager
 
 > the main goal is to build from scratch all the stuff under you eyes.
 > we pull image container direclty from well known repositories
@@ -59,7 +59,7 @@ you will need 4 GB of disk space during the built process, even if the final res
 ```sh
 git clone https://github.com/vpolaris/Podman-Bitwarden.git
 cd Podman-Bitwarden
-chmod u+x setup.sh;./setup.sh
+chmod u+x setup.sh; sudo ./setup.sh
 ```
 
 What the setup does, it create a dedicated user named bitwarden on the host, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launch every time the host server is restarted. The service will be owned by the bitwarden user
@@ -80,7 +80,7 @@ At the end of questions, you can start the process immediately or copy the infor
 ## Acces
 you can access by default to the vault via
 https://vault.bitwarden.lan
-or the domain nameyou provided
+or the domain name you provided
 
 ## Manage the container
 
@@ -128,10 +128,11 @@ you can monitor the httpd service through 4 log files located under the director
 
 ## Sources: 
 I found my inspiration from these web site
-https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
-https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
++https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
++https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
 
-
+Ressource Control Group and Timer
++https://medium.com/horrible-hacks/using-systemd-as-a-better-cron-a4023eea996d
 
 ## License
 
@@ -147,7 +148,7 @@ AGPL-3.0 License
    [npm]: <https://docs.npmjs.com/about-npm>
    [Rust]: <https://www.rust-lang.org/>
    [Apache]: <https://httpd.apache.org/>
-   [Sass]: <hhttps://sass-lang.com/>
+   [Sass]: <https://sass-lang.com/>
    [WSL2]: <https://www.redhat.com/sysadmin/podman-windows-wsl2>
    [node.js]: <http://nodejs.org>
    [Twitter Bootstrap]: <http://twitter.github.com/bootstrap/>

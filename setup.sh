@@ -127,21 +127,35 @@ if ! [ -d  "/home/bitwarden/.local/share/containers" ]; then
 	mkdir -p "/home/bitwarden/.local/share/containers"
 fi
 
-cp -r . "${DATADIR}/bitwarden/project"
+if [ -d  "${DATADIR}/bitwarden/project" ]; then
+	rm -rf "${DATADIR}/bitwarden/project"
+fi
+cp -rf . "${DATADIR}/bitwarden/project"
+
 chown -R bitwarden: "${DATADIR}" "/home/bitwarden/.config" "/home/bitwarden/.local"; chmod -R 770 "${DATADIR}"
 
-semanage fcontext -a -e "/var/lib/containers" "/home/bitwarden/.local/share/containers"
-semanage fcontext -a -e "/etc/containers" "/home/bitwarden/.config/containers"
-restorecon -R /home/bitwarden/.local/share/containers "/home/bitwarden/.config/containers"
-semanage fcontext -a -f a -t container_file_t "${DATADIR}/bitwarden(/.*)?"
-restorecon -R "${DATADIR}/bitwarden"
-sudo su - bitwarden -c 'podman info'
+if [ "$(getenforce)" == "Enforcing" ]; then
+	printf  "selinux is active\n"
+	if [ -f  "/home/bitwarden/.config/selinux.was.setup" ]; then
+		printf  "selinux is already configured \n"
+	else    
+		setsebool -P virt_sandbox_use_netlink 1
+		setsebool -P httpd_can_network_connect on
+		setsebool -P container_manage_cgroup true
+		semanage fcontext -a -e "/var/lib/containers" "/home/bitwarden/.local/share/containers"
+		semanage fcontext -a -e "/etc/containers" "/home/bitwarden/.config/containers"
+		restorecon -R /home/bitwarden/.local/share/containers "/home/bitwarden/.config/containers"
+		semanage fcontext -a -f a -t container_file_t "${DATADIR}/bitwarden(/.*)?"
+		restorecon -R "${DATADIR}/bitwarden"
+		touch "/home/bitwarden/.config/selinux.was.setup"
+	fi
+fi
 
 export ADMTKN="${ADMTKN}" DOMAIN="${DOMAIN}" HTTPS="${HTTPS}"
-envsubst '${ADMTKN} ${DOMAIN}'< .env.txt > .env
-envsubst '${DOMAIN} ${HTTPS}' < vhost.template.txt > vhost.conf
-envsubst '${HTTPS}' < ssl.template.txt > ssl.conf
-envsubst '${DOMAIN} ${HTTPS}' < Dockerfile.template.txt > Dockerfile
+envsubst '${ADMTKN} ${DOMAIN}'< ./templates/env.tpl > ./configurations/.env
+envsubst '${DOMAIN} ${HTTPS}' < ./templates/vhost.tpl > ./configurations/vhost.conf
+envsubst '${HTTPS}' < ./templates/ssl.tpl > ./configurations/ssl.conf
+envsubst '${DOMAIN} ${HTTPS}' < ./templates/Dockerfile.tpl > Dockerfile
 
 
 if [[ ${OS}=="" ]]; then
@@ -184,12 +198,17 @@ if [ -f  "${DATADIR}/bitwarden/build.completed" ]; then
 	if [[ $(sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user list-unit-files -t service|grep 'container'") != "" ]]; then
 		printf "Stopping previous container service\n"
 		sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user stop container-bitwarden.service"
+		sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user disable container-bitwarden.service" 
+		rm -rf /home/bitwarden/.config/systemd/user/container-bitwarden.service
+		pkill conmon
+		#sudo rm -rf /run/user/10500/containers/ 
 	fi
 	sudo su - bitwarden -c "podman run -d --replace --systemd=always --log-driver=journald --log-opt=tag=bitwarden --sdnotify=conmon --name bitwarden -h bitwarden.lan -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -p ${HTTPS}:${HTTPS} localhost/${TAGNAME}"
 	
 	printf "Generating systemd service file\n"
 	if [ -f  "/home/bitwarden/container-bitwarden.service" ]; then
-		rm /home/bitwarden/container-bitwarden.service
+		rm -f /home/bitwarden/container-bitwarden.service
+		rm -f /etc/systemd/user/container-bitwarden.service
 	fi
 	sudo su - bitwarden -c "podman generate systemd -f -n bitwarden --restart-policy=always"
 	
