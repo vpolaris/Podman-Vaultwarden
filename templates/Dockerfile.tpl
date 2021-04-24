@@ -24,7 +24,7 @@ else dnf -y install g++ $DNFOPTION; fi
 
 #Install Rust
 RUN curl  -Lo /tmp/sh.rustup.rs -sSf https://sh.rustup.rs; \
-bash -E /tmp/sh.rustup.rs -y --default-host x86_64-unknown-linux-gnu --default-toolchain nightly --profile minimal
+bash -E /tmp/sh.rustup.rs -y --default-host "$(uname -m)"-unknown-linux-gnu --default-toolchain nightly --profile minimal
 ENV PATH="~/.cargo/bin:${PATH}"
 
 #Install Node.JS and npm

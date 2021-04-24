@@ -50,10 +50,11 @@ And of course, This project itself is open source and located on GitHub.
 
 #### Prerequisites:
 
-You need to install at least Podman version 3.0 and git (or download the last release from github)
-Your firewall should accept connection on port 443 by default or the port where the web server is listening
+You need to install at least **Podman version 3.0** and **gi**t (or download the last release from github)
+Your firewall should accept connection on port **443** by default or the port where the web server is listening
 The name of web server must be resolvable, preferrably via a DNS registration
-you will need 4 GB of disk space during the built process, even if the final result turn around 290 to 340 MB 
+you will need **4 GB** of disk space during the built process, even if the final result turn around 290 to 340 MB 
+If SELinux is active you need to check if **policycoreutils-python** package is installed
 
 #### Built Process:
 ```sh
@@ -62,7 +63,7 @@ cd Podman-Bitwarden
 chmod u+x setup.sh; sudo ./setup.sh
 ```
 
-What the setup does, it create a dedicated user named bitwarden on the host, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launch every time the host server is restarted. The service will be owned by the bitwarden user
+What the setup does? It creates a dedicated user named bitwarden on the host machine, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launched every time the host server is restarted. The service will be owned by the bitwarden user
 
 + No login or sudo available
 + Only the rights to manage containers
@@ -127,19 +128,24 @@ you can monitor the httpd service through 4 log files located under the director
 + ssl_error_log record all ssl failures
 
 ## Ressource Control
-the maximum amount of memory was fixed at 300MB, 150MB for the application and 150MB for system, allocated CPU has been set to 25% for application.
-That'suit well a familly needs. for groups of 10 or more users you may to tune this values
-for application the file to adjust is service/bitwarden-httpd.slice and for system you can set the value inservice/memorymax.conf. Normally the memory used is arround 120MB on the host in normal operation mode
+The maximum amount of memory usage for the container was fixed at 300MB, 150MB for the application and 150MB for system, allocated CPU has been set to 25% for application.
+That's suit well a familly needs. for groups of 10 or more users you may tune this values.
+For application the file to adjust is services/bitwarden-httpd.slice and for system you can set the value in services/memorymax.conf. Normally the memory used is arround 130MB on the host in normal operation mode
+
+##Testing
+Working on :
++ VMWare - Fedora 33 Server edition
++ Raspberry Pi4 - Fedora CoreOS 33
 
 
 ## Sources: 
-I found my inspiration from these web site
+I found my inspiration from these web sites
 
-** For Bitwarden RS and the vault combined **
+**For Bitwarden RS and the vault combined**
 + https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
 + https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
 
-** Ressource Control Group and Timer **
+**Ressource Control Group and Timer**
 + https://medium.com/horrible-hacks/using-systemd-as-a-better-cron-a4023eea996d
 
 ## License

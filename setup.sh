@@ -3,7 +3,7 @@ ADMTKN="$(tr -cd [:alnum:] < /dev/urandom | fold -w 48 | head -n 1)"
 ADMINPASS="$(tr -cd [:alnum:] < /dev/urandom | fold -w 16 | head -n 1)"
 DOMAIN="vault.bitwarden.lan"
 HTTPS="443"
-DATADIR="/home/bitwarden/.persistent_storage/"
+
 SSLSTORE="$HOME/.ssl"
 VERSION="1.00"
 
@@ -21,14 +21,14 @@ read -e -p "Enter tag version:" -i "${VERSION}" VERSION
 read -e -p "Do you have certificates to push ? (y|n) " -i "n" CERTS
 case "${CERTS}" in
 	"y")
-	read -e -p "Enter cerficate location :" -i "${SSLSTORE}" SSLSTORE
-	;;
+	  read -e -p "Enter certificate location :" -i "${SSLSTORE}" SSLSTORE
+	  ;;
 	"n")
-	SSLSTORE="unknown"
-	;;
+	  SSLSTORE="unknown"
+	  ;;
 	*)
-	printf "Invalid choice\n"
-	exit 1
+	  printf "Invalid choice\n"
+	  exit 1
 	;;
 esac
 
@@ -42,6 +42,7 @@ else
 	loginctl enable-linger 10500
 	systemctl start user@10500.service
 fi
+
 
 if ! [ -f  "./layer.tar" ]; then
   proc="$(uname -m)"
@@ -71,6 +72,9 @@ if ! [ -f  "./layer.tar" ]; then
   printf "${OS}" > os.version
   
 fi
+
+HOMEDIR=$( getent passwd "bitwarden" | cut -d: -f6 )
+DATADIR="${HOMEDIR}/.persistent_storage"
 
 if ! [ -d  "${DATADIR}" ]; then 
 	printf  "${DATADIR} does not exist, please provide a location for vault store\n "; 
@@ -119,20 +123,20 @@ if ! [ -f  "${DATADIR}/bitwarden/certs/bitwarden.pem" ]; then
 	fi
 fi
 
-if ! [ -d  "/home/bitwarden/.config" ]; then
-	mkdir -p "/home/bitwarden/.config/containers"
+if ! [ -d  "${HOMEDIR}/.config" ]; then
+	mkdir -p "${HOMEDIR}/.config/containers"
 fi
 
-if ! [ -d  "/home/bitwarden/.local/share/containers" ]; then
-	mkdir -p "/home/bitwarden/.local/share/containers"
+if ! [ -d  "${HOMEDIR}/.local/share/containers" ]; then
+	mkdir -p "${HOMEDIR}/.local/share/containers"
 fi
 
-if [ -d  "${DATADIR}/bitwarden/project" ]; then
-	rm -rf "${DATADIR}/bitwarden/project"
+if [ -d  "${DATADIR}/project" ]; then
+	rm -rf "${DATADIR}/project"
 fi
-cp -rf . "${DATADIR}/bitwarden/project"
 
-chown -R bitwarden: "${DATADIR}" "/home/bitwarden/.config" "/home/bitwarden/.local"; chmod -R 770 "${DATADIR}"
+
+chown -R bitwarden: "${DATADIR}" "${HOMEDIR}/.config" "${HOMEDIR}/.local"; chmod -R 770 "${DATADIR}"
 
 if [ "$(getenforce)" == "Enforcing" ]; then
 	printf  "selinux is active\n"
@@ -142,12 +146,12 @@ if [ "$(getenforce)" == "Enforcing" ]; then
 		setsebool -P virt_sandbox_use_netlink 1
 		setsebool -P httpd_can_network_connect on
 		setsebool -P container_manage_cgroup true
-		semanage fcontext -a -e "/var/lib/containers" "/home/bitwarden/.local/share/containers"
-		semanage fcontext -a -e "/etc/containers" "/home/bitwarden/.config/containers"
-		restorecon -R /home/bitwarden/.local/share/containers "/home/bitwarden/.config/containers"
-		semanage fcontext -a -f a -t container_file_t "${DATADIR}/bitwarden(/.*)?"
+		semanage fcontext -a -e "/var/lib/containers" "${HOMEDIR}/.local/share/containers"
+		semanage fcontext -a -e "/etc/containers" "${HOMEDIR}/.config/containers"
+		restorecon -R "${HOMEDIR}/.local/share/containers" "${HOMEDIR}/.config/containers"
+		semanage fcontext -a -t container_file_t "${DATADIR}/bitwarden(/.*)?"
 		restorecon -R "${DATADIR}/bitwarden"
-		touch "/home/bitwarden/.config/selinux.was.setup"
+		touch "${HOMEDIR}/.config/selinux.was.setup"
 	fi
 fi
 
@@ -156,7 +160,7 @@ envsubst '${ADMTKN} ${DOMAIN}'< ./templates/env.tpl > ./configurations/.env
 envsubst '${DOMAIN} ${HTTPS}' < ./templates/vhost.tpl > ./configurations/vhost.conf
 envsubst '${HTTPS}' < ./templates/ssl.tpl > ./configurations/ssl.conf
 envsubst '${DOMAIN} ${HTTPS}' < ./templates/Dockerfile.tpl > Dockerfile
-
+cp -rf . "${DATADIR}/project"
 
 if [[ ${OS}=="" ]]; then
   if [ -f os.version ];then
@@ -172,12 +176,12 @@ read -e -p "Enter your answer " -i "y" VALIDATE
 case "${VALIDATE}" in
 	"y")
 	printf "Executed Command :\n"
-	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project/Dockerfile\n"
-	sudo su - bitwarden -c "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project/Dockerfile"
+	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}/project/Dockerfile\n"
+	sudo su - bitwarden -c "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}/project/Dockerfile"
 	;;
 	"n")
 	printf "To launch your built run the following command :\n"
-	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}bitwarden/project/Dockerfile\n"
+	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}/project/Dockerfile\n"
 	exit 0
 	;;
 	*)
@@ -191,29 +195,51 @@ if [ -f  "${DATADIR}/bitwarden/build.completed" ]; then
 	rm -f "${DATADIR}/bitwarden/build.completed"
 
 	FILENAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-bitwarden.${VERSION}.oci
-	printf "Saving image file under ${DATADIR}bitwarden/project/${FILENAME}\n"
-	sudo su - bitwarden -c "podman image save --format oci-archive -o ${DATADIR}bitwarden/project/${FILENAME} localhost/${TAGNAME}"
+	printf "Saving image file under ${DATADIR}/bitwarden/project/${FILENAME}\n"
+	sudo su - bitwarden -c "podman image save --format oci-archive -o ${DATADIR}/bitwarden/project/${FILENAME} localhost/${TAGNAME}"
 	
-	printf "Launching image file ${DATADIR}bitwarden/project/${FILENAME}\n"
+	printf "Launching image file ${DATADIR}/bitwarden/project/${FILENAME}\n"
 	if [[ $(sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user list-unit-files -t service|grep 'container'") != "" ]]; then
 		printf "Stopping previous container service\n"
 		sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user stop container-bitwarden.service"
 		sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user disable container-bitwarden.service" 
-		rm -rf /home/bitwarden/.config/systemd/user/container-bitwarden.service
+		rm -rf ${HOMEDIR}/.config/systemd/user/container-bitwarden.service
 		pkill conmon
 		#sudo rm -rf /run/user/10500/containers/ 
 	fi
-	sudo su - bitwarden -c "podman run -d --replace --systemd=always --log-driver=journald --log-opt=tag=bitwarden --sdnotify=conmon --name bitwarden -h bitwarden.lan -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -p ${HTTPS}:${HTTPS} localhost/${TAGNAME}"
+	
+	if [ ${HTTPS} -le 1024 ]; then
+	  printf "Port ${HTTPS} belong to reserved port <=1024 .\n "
+	  read -e -p "Do you want add net.ipv4.ip_unprivileged_port_start=${HTTPS} to kernel config (y)? or enter another port (n): " -i "n" RESPONSE
+      case "${RESPONSE}" in
+	    "y")
+	      printf "net.ipv4.ip_unprivileged_port_start=${HTTPS}" > "/etc/sysctl.d/75-unpriviliged-port-start-at-${HTTPS}.conf";
+		  sysctl -p "/etc/sysctl.d/75-unpriviliged-port-start-at-${HTTPS}.conf";
+		  MPORT="${HTTPS}";
+	      ;;
+		"n")
+		  read -e -p "Enter new port to map : " -i "2${HTTPS}" MPORT;
+	      ;;
+	    *)
+	      printf "Invalid choice\n";
+	      exit 1;
+	      ;;
+      esac
+	else
+	  MPORT="${HTTPS}"
+	fi
+	
+	sudo su - bitwarden -c "podman run -d --replace --systemd=always --log-driver=journald --log-opt=tag=bitwarden --sdnotify=conmon --name bitwarden -h bitwarden.lan -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -p ${MPORT}:${HTTPS} localhost/${TAGNAME}"
 	
 	printf "Generating systemd service file\n"
-	if [ -f  "/home/bitwarden/container-bitwarden.service" ]; then
-		rm -f /home/bitwarden/container-bitwarden.service
+	if [ -f  "${HOMEDIR}/container-bitwarden.service" ]; then
+		rm -f ${HOMEDIR}/container-bitwarden.service
 		rm -f /etc/systemd/user/container-bitwarden.service
 	fi
 	sudo su - bitwarden -c "podman generate systemd -f -n bitwarden --restart-policy=always"
 	
 	printf "Starting systemd container-bitwarden.service as user bitwarden\n"
-	cp  -f /home/bitwarden/container-bitwarden.service /etc/systemd/user/container-bitwarden.service
+	cp  -f ${HOMEDIR}/container-bitwarden.service /etc/systemd/user/container-bitwarden.service
 	sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl daemon-reload --user"
 	sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user enable /etc/systemd/user/container-bitwarden.service"
 	sudo su - bitwarden -c "podman container stop bitwarden"
