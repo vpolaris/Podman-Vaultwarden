@@ -38,7 +38,7 @@ if [[ $(id -u bitwarden) -eq 10500 ]]; then
 	usermod -s /bin/bash bitwarden
 else
 	printf "Creation of bitwarden user\n";
-	adduser -u 10500 -G docker --shell /bin/bash --comment "Bitwarden RS User Container" --user-group bitwarden
+	useradd -m -u 10500 -G docker --shell /bin/bash --comment "Bitwarden RS User Container" --user-group bitwarden
 	loginctl enable-linger 10500
 	systemctl start user@10500.service
 fi
@@ -68,7 +68,7 @@ if ! [ -f  "./layer.tar" ]; then
   esac
   printf "Downloading ${image}\n"
   curl -sSl ${page}${image} -o/tmp/${image}
-  tar -Jxv -f /tmp/${image} --strip-components=1 */layer.tar
+  tar -Jxv -f /tmp/${image} --wildcards --strip-components=1 */layer.tar
   printf "${OS}" > os.version
   
 fi
