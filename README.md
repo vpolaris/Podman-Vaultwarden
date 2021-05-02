@@ -1,28 +1,31 @@
-# Podman Bitwarden RS Project
-## _Bitwarden RS Powered by Podman_
+# Podman Vaultwarden Project
+## _Vaultwarden Powered by Podman_
 
 [![N|Solid](https://raw.githubusercontent.com/containers/podman/master/logo/podman-logo.png)](https://podman.io/getting-started/)
 
-This project want to build a podman container to host a complete solution of [Bitwarden RS API][bitwarden-rs] and a [Web vault][Web-vault]: interface. Which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
+This project want to build a podman container to host a complete solution of [Vaultwarden API][bitwarden-rs] and a [Web vault][Web-vault]: interface. Which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
 
 - Podman don't need a daemon to run a container 
-- Bitwarden RS API don't need to be register
+- Vaultwarden API don't need to be register
 - Web vault can be accessed by mobile client or browser
 
-Make sure you can do the difference between the official clients and the Web Vault powered by Bitwarden Inc and the unofficial Bitwarden RS API a fork written in Rust by his author Dani Garcia.
+Make sure you can do the difference between the official clients and the Web Vault powered by Bitwarden Inc and the unofficial Vaultwarden API a fork written in Rust by his author Dani Garcia.
+
++ Note :
+Due to new denomination of Vaultwarden, I 'll change progessively named object accordingly.
 
 ## Features
 
 - Support Fedora 33 and CentOS 8 as image containers
-- Bitwarden RS and the Web vault are built from sources
+- Vaultwarden and the Web vault are built from sources
 - You can import your own certificates or create a self-signed set
 - Token and password are automatically generated
 - Full automation process
 
-Podman can be used in almost all modern linux distribution even in [WSL2]. Fedora like (CentOS, Red Hat) or Debian like (Ubuntu, Raspian) are well supported. Running Bitwarden RS with its own web server make this solution highly portable and secure because you can run the container without root privileges. System administrators will appreciate the fact that the two services will be handled by systemd with all the capabilities associate to this init manager
+Podman can be used in almost all modern Linux distribution even in [WSL2]. Fedora like (CentOS, Red Hat) or Debian like (Ubuntu, Raspian) are well supported. Running Vaultwarden with its own web server make this solution highly portable and secure because you can run the container without root privileges. System administrators will appreciate the fact that the two services will be handled by systemd with all the capabilities associate to this init manager
 
 > the main goal is to build from scratch all the stuff under you eyes.
-> we pull image container direclty from well known repositories
+> we pull image container directly from well known repositories
 > https://fr2.rpmfind.net/linux/fedora/linux/releases/33/Container for Fedora
 > https://cloud.centos.org/centos/8/ for CentOS8
 > clone sources from there git repositories
@@ -50,10 +53,10 @@ And of course, This project itself is open source and located on GitHub.
 
 #### Prerequisites:
 
-You need to install at least **Podman version 3.0** and **gi**t (or download the last release from github)
+You need to install at least **Podman version 3.0** and **git** (or download the last release from github)
 Your firewall should accept connection on port **443** by default or the port where the web server is listening
 The name of web server must be resolvable, preferrably via a DNS registration
-you will need **4 GB** of disk space during the built process, even if the final result turn around 290 to 340 MB 
+you will need **4 GB** of disk space and **3 GB** of RAM, during the built process, even if the final result turn around 290 to 340 MB 
 If SELinux is active you need to check if **policycoreutils-python** package is installed
 
 #### Built Process:
@@ -136,12 +139,12 @@ For application the file to adjust is services/bitwarden-httpd.slice and for sys
 Working on :
 + VMWare - Fedora 33 Server edition
 + Raspberry Pi4 - Fedora CoreOS 33
-
++ WSL2 - Ubuntu 20.04 (see wiki for hack)
 
 ## Sources: 
 I found my inspiration from these web sites
 
-**For Bitwarden RS and the vault combined**
+**For Vaultwarden and the vault combined**
 + https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
 + https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
 
@@ -157,7 +160,7 @@ AGPL-3.0 License
 [//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
 
    [Web-vault]: https://bitwarden.com/
-   [bitwarden-rs]: <https://github.com/dani-garcia/bitwarden_rs/wiki>
+   [bitwarden-rs]: <https://github.com/dani-garcia/vaultwarden/wiki>
    [gcc]: <https://gcc.gnu.org/>
    [npm]: <https://docs.npmjs.com/about-npm>
    [Rust]: <https://www.rust-lang.org/>
