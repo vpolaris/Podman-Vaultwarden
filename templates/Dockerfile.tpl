@@ -33,7 +33,7 @@ bash -E /tmp/setup_14.x; \
 dnf -y install nodejs $DNFOPTION
 
 #Compile the back-end
-RUN git clone https://github.com/dani-garcia/bitwarden_rs.git /tmp/bitwarden; \
+RUN git clone https://github.com/dani-garcia/vaultwarden.git /tmp/bitwarden; \
 ~/.cargo/bin/cargo build --features sqlite --release --manifest-path=/tmp/bitwarden/Cargo.toml
 
 #Compile the front-end
@@ -66,7 +66,7 @@ chown -R admin:bitwarden /home/admin/.ssl
 #Move files and set permissions
 
 #Bitwarden RS server
-RUN mv /tmp/bitwarden/target/release/bitwarden_rs /usr/local/bin/bitwarden
+RUN mv /tmp/bitwarden/target/release/vaultwarden /usr/local/bin/bitwarden
 COPY ./configurations/.env /etc/bitwarden/.env
 RUN chmod -R 750 /usr/local/bin/bitwarden /var/lib/bitwarden/; \
 chmod -R 770 /etc/bitwarden/; \
