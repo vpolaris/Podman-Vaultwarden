@@ -10,14 +10,14 @@
     ServerAlias  ${DOMAIN}
     ServerAdmin admin@${DOMAIN}
 
-    SSLCertificateFile /etc/pki/tls/certs/bitwarden.pem
-    SSLCertificateKeyFile /etc/pki/tls/private/bitwarden.key
-    SSLCACertificateFile /home/admin/.ssl/CA-Bitwarden.pem
+    SSLCertificateFile /etc/pki/tls/certs/vaultwarden.pem
+    SSLCertificateKeyFile /etc/pki/tls/private/vaultwarden.key
+    SSLCACertificateFile /home/admin/.ssl/CA-Vaultwarden.pem
 
     Protocols h2 http/1.1
 
-    ErrorLog /var/lib/bitwarden/logs/httpd/error_log
-    CustomLog /var/lib/bitwarden/logs/httpd/access_log combined
+    ErrorLog /var/lib/vaultwarden/logs/httpd/error_log
+    CustomLog /var/lib/vaultwarden/logs/httpd/access_log combined
 
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} =websocket [NC]

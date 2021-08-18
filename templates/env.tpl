@@ -5,11 +5,11 @@
 ## in the admin interface. Those overrides are stored within DATA_FOLDER/config.json .
 
 ## Main data folder
-DATA_FOLDER=/var/lib/bitwarden/data
+DATA_FOLDER=/var/lib/vaultwarden/data
 
 ## Database URL
 ## When using SQLite, this is the path to the DB file, default to %DATA_FOLDER%/db.sqlite3
-DATABASE_URL=/var/lib/bitwarden/data/db.sqlite3
+DATABASE_URL=/var/lib/vaultwarden/data/db.sqlite3
 ## When using MySQL, specify an appropriate connection URI.
 ## Details: https://docs.diesel.rs/diesel/mysql/struct.MysqlConnection.html
 # DATABASE_URL=mysql://user:password@host[:port]/database_name
@@ -64,7 +64,7 @@ WEBSOCKET_PORT=3012
 
 ## Logging to file
 ## It's recommended to also set 'ROCKET_CLI_COLORS=off'
-LOG_FILE=/var/lib/bitwarden/logs/bitwarden/bitwarden.log
+LOG_FILE=/var/lib/vaultwarden/logs/vaultwarden/vaultwarden.log
 
 ## Logging to Syslog
 ## This requires extended logging
@@ -81,7 +81,7 @@ LOG_LEVEL=warn
 ## Enable WAL for the DB
 ## Set to false to avoid enabling WAL during startup.
 ## Note that if the DB already has WAL enabled, you will also need to disable WAL in the DB,
-## this setting only prevents bitwarden_rs from automatically enabling it on start.
+## this setting only prevents vaultwarden_rs from automatically enabling it on start.
 ## Please read project wiki page about this setting first before changing the value as it can
 ## cause performance degradation or might render  the service unable to start.
 # ENABLE_DB_WAL=true
