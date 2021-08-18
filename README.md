@@ -66,7 +66,7 @@ cd Podman-Bitwarden
 chmod u+x setup.sh; sudo ./setup.sh
 ```
 
-What the setup does? It creates a dedicated user named bitwarden on the host machine, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launched every time the host server is restarted. The service will be owned by the bitwarden user
+What the setup does? It creates a dedicated user named vaultwarden on the host machine, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launched every time the host server is restarted. The service will be owned by the bitwarden user
 
 + No login or sudo available
 + Only the rights to manage containers
@@ -94,14 +94,14 @@ Even if the user is locked, you can run commands if you use the correct syntax.
 
 ##### To visualize the user journal
 ```sh
-sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10500 ;journalctl --user -xe" bitwarden
+sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10502 ;journalctl --user -xe" vaultwarden
 ```
 ##### To visualize container service status
 ```sh
-sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10500 ; systemctl --user status container-bitwarden.service" bitwarden
+sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10502 ; systemctl --user status container-vaultwarden.service" vaultwarden
 ```
 As you understood all commands need to be prefixed with
-sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10500  
+sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10502  
 and will be finished by the user name
 
 As the container is managed by systemd do not use podman command to stop/start the container. Prefer this way:
@@ -109,23 +109,23 @@ As the container is managed by systemd do not use podman command to stop/start t
 ##### Stop the container
 
 ```sh
-sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10500 ; systemctl --user stop container-bitwarden.service" bitwarden
+sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10502 ; systemctl --user stop container-vaultwarden.service" vaultwarden
 ```
 
 ##### Start the container
 ```sh
-sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10500 ; systemctl --user start container-bitwarden.service" bitwarden
+sudo su -s /bin/bash -c "export XDG_RUNTIME_DIR=/run/user/10502 ; systemctl --user start container-vaultwarden.service" vaultwarden
 ```
 ## Log Files
 You can monitor service's activities through two dedicated directories exported outside the container
 
-#### Bitwarden log file 
+#### Vaultwarden log file 
 Accessible by default to this location
 ```sh
-tail /home/bitwarden/.persistent_storage/bitwarden/logs/bitwarden/bitwarden.log
+tail /home/vaultwarden/.persistent_storage/vaultwarden/logs/vaultwarden/vaultwarden.log
 ```
 #### Apache log files
-you can monitor the httpd service through 4 log files located under the directory /home/bitwarden/.persistent_storage/bitwarden/logs/bitwarden/httpd
+you can monitor the httpd service through 4 log files located under the directory /home/vaultwarden/.persistent_storage/vaultwarden/logs/vaultwarden/httpd
 
 + access_log record all access activities
 + error_log record all httpd service error
@@ -301,7 +301,7 @@ I use NAT connection, to access  the port 2443 on my podman host i need to setup
 
 Open Virtual Network Editor as administrator, select your NAT interface and click on NAT settings. Add a port forwarding rule
 
-+2443 TCP 192.168.xxx.xxx:2443
++ 2443 TCP 192.168.xxx.xxx:2443
 
 If something continue to goes wrong check also routing table and third party device as router or repeater
 
