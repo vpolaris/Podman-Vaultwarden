@@ -86,6 +86,8 @@ you can access by default to the vault via
 https://vault.bitwarden.lan
 or the domain name you provided
 
+[![N|Solid](https://github.com/vpolaris/Podman-Bitwarden/blob/main/docs/bitwarden_logon_screen.PNG)
+
 ## Manage the container
 
 Even if the user is locked, you can run commands if you use the correct syntax.
@@ -135,11 +137,170 @@ The maximum amount of memory usage for the container was fixed at 300MB, 150MB f
 That's suit well a familly needs. for groups of 10 or more users you may tune this values.
 For application the file to adjust is services/bitwarden-httpd.slice and for system you can set the value in services/memorymax.conf. Normally the memory used is arround 130MB on the host in normal operation mode
 
-##Testing
+## Testing
 Working on :
 + VMWare - Fedora 33 Server edition
 + Raspberry Pi4 - Fedora CoreOS 33
 + WSL2 - Ubuntu 20.04 (see wiki for hack)
+
+## Troubleshooting
+
+We consider this two options
+
+hostname is vault.bitwarden.lan and we forward communication through port 2443 TCP
+
+on the podman host, check if both httpd and bitwarden service are running inside the container
+
+```
+usermod -s /bin/bash bitwarden (or vaultwarden for most recent release)
+sudo su podman exec -ti bitwarden /bin/bash
+systemctl status bitwarden httpd
+```
+A good result should be:
+```
+systemctl status bitwarden httpd
+● bitwarden.service - Bitwarden RS server
+     Loaded: loaded (/etc/systemd/system/bitwarden.service; enabled; vendor preset: disabled)
+     Active: active (running) since Wed 2021-08-18 14:36:09 CEST; 25min ago
+       Docs: https://github.com/dani-garcia/bitwarden_rs
+   Main PID: 17 (bitwarden)
+      Tasks: 16 (limit: 307)
+     Memory: 6.2M
+        CPU: 148ms
+     CGroup: /bitwarden.slice/bitwarden-httpd.slice/bitwarden.service
+             └─17 /usr/local/bin/bitwarden
+
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]: Configured for production.
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => address: 127.0.0.1
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => port: 8000
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => log: critical
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => workers: 8
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => secret key: private-cookies disabled
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => limits: forms = 32KiB
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => keep-alive: 5s
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => tls: disabled
+Aug 18 14:36:09 vaultwarden.lan bitwarden[17]: Rocket has launched from http://127.0.0.1:8000
+
+● httpd.service - The Apache HTTP Server
+     Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
+    Drop-In: /etc/systemd/system/httpd.service.d
+             └─slice.conf
+     Active: active (running) since Wed 2021-08-18 14:36:10 CEST; 25min ago
+       Docs: man:httpd.service(8)
+   Main PID: 38 (httpd)
+     Status: "Total requests: 9; Idle/Busy workers 98/2;Requests/sec: 0.00583; Bytes served/sec: 3.8KB/sec"
+      Tasks: 130 (limit: 307)
+     Memory: 14.7M
+        CPU: 1.365s
+     CGroup: /bitwarden.slice/bitwarden-httpd.slice/httpd.service
+             ├─ 38 /usr/sbin/httpd -DFOREGROUND
+             ├─ 39 /usr/sbin/httpd -DFOREGROUND
+             ├─ 40 /usr/sbin/httpd -DFOREGROUND
+             ├─ 42 /usr/sbin/httpd -DFOREGROUND
+             ├─ 43 /usr/sbin/httpd -DFOREGROUND
+             └─144 /usr/sbin/httpd -DFOREGROUND
+
+Aug 18 14:36:10 vaultwarden.lan systemd[1]: Starting The Apache HTTP Server...
+Aug 18 14:36:10 vaultwarden.lan httpd[38]: Server configured, listening on: port 443, port 8800, ...
+Aug 18 14:36:10 vaultwarden.lan systemd[1]: Started The Apache HTTP Server.
+```
+
+If you see some errros, you can try to restart both service 
+```
+systemctl restart bitwarden httpd
+```
+Run the status command again, if the problem still persist, please open a bug request
+
+Lock the user again
+```
+usermod -s /sbin/nologin vaultwarden
+```
+
+If services are running fines, try to troubleshoot network communication
+
+first we use nslookup to resolve our hostname, be aware that the virtual host configured with appache need to be resolved  accordingly  with defined name given during setup
+the host of the podman container needs to be different of given virtual host. from a client machine try:
+
+```
+nslookup vault.bitwarden.lan
+ nslookup vault.bitwarden.lan
+Server:         127.0.0.53
+Address:        127.0.0.53#53
+
+Name:   vault.bitwarden.lan
+Address: 192.168.xxx.xxx
+
+```
+This is what a good answer looks like
+
+If you failed to resolve your hostname, you can and an entry in /etc/hosts for Linux or C:\Windows\System32\drivers\etc\hosts (you need admin rights in both case
+this entry shoube this format
++ 192.168.xxx.xxx vault.bitwarden.lan
+
+The most reliable solution is to add a DNS entry in you DNS server configuration
+
+If you continue to experiment connection failure, you can test port access in this way
+On Linux Platform
+A valid response should be
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Connected to 192.168.124.219:2443.
+Ncat: 0 bytes sent, 0 bytes received in 0.01 seconds.
+
+In case of  failure
+nc -zv vault.bitwarden.lan 2443
+Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Connection refused.
+
+On Windows Platform
+test-netconnection -ComputerName vault.bitwarden.lan -Port 2443                                                                                                                                                             
+ComputerName     : vault.bitwarden.lan
+RemoteAddress    : 192.168.xxx.xxx
+RemotePort       : 2443
+InterfaceAlias   : Ethernet0
+SourceAddress    : 192.168.xxx.xxx
+TcpTestSucceeded : True
+
+In case of failure
+
+test-netconnection -ComputerName vault.bitwarden.lan -Port 2443
+WARNING : TCP connect to (192.168.xxx.xxx : 2443) failed
+
+
+ComputerName           : vault.bitwarden.lan
+RemoteAddress          : 192.168.xxx.xxx
+RemotePort             : 2443
+InterfaceAlias         : Ethernet0
+SourceAddress          : 192.168.xxx.xxx
+PingSucceeded          : True
+PingReplyDetails (RTT) : 1 ms
+TcpTestSucceeded       : False
+
+in case of failure we need to ensure that the host firewall dont block the communication
+Example on Fedora Like we shutdown the firewall, for other firewalls (ufw or netfilter consult appropriate documentation)
+```
+systemctl stop firewalld.service
+```
+
+Reinitiate a test connection if the test succeed add a firewall rule to accept incoming connection on TCP port 2443
+```
+firewall-cmd --add-port=2443/tcp --permanent
+firewall-cmd --reload
+```
+...and start the service
+```
+systemctl start firewalld.service
+```
+
+If the problem persist try to check port forwarding in case you are in NAT environnment; on you ISP box or Virtualizer as kvm or VMWare
+
+Example on VMWare
+I use NAT connection, to access  the port 2443 on my podman host i need to setup port forwarding
+
+Open Virtual Network Editor as administrator, select your NAT interface and click on NAT settings. Add a port forwarding rule
+
+2443 TCP 192.168.xxx.xxx:2443
+
+If something continue to goes wrong check also routing table and third party device as router or repeater
 
 ## Sources: 
 I found my inspiration from these web sites
