@@ -233,7 +233,7 @@ Address: 192.168.xxx.xxx
 ```
 This is what a good answer looks like
 
-If you failed to resolve your hostname, you can and an entry in /etc/hosts for Linux or C:\Windows\System32\drivers\etc\hosts (you need admin rights in both case
+If you failed to resolve your hostname, you can add an entry in /etc/hosts for Linux or C:\Windows\System32\drivers\etc\hosts for Windows (you need admin rights in both case
 this entry shoube this format
 + 192.168.xxx.xxx vault.bitwarden.lan
 
@@ -242,16 +242,19 @@ The most reliable solution is to add a DNS entry in you DNS server configuration
 If you continue to experiment connection failure, you can test port access in this way
 On Linux Platform
 A valid response should be
+```
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 Ncat: Connected to 192.168.124.219:2443.
 Ncat: 0 bytes sent, 0 bytes received in 0.01 seconds.
-
+```
 In case of  failure
+```
 nc -zv vault.bitwarden.lan 2443
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 Ncat: Connection refused.
-
+```
 On Windows Platform
+```
 test-netconnection -ComputerName vault.bitwarden.lan -Port 2443                                                                                                                                                             
 ComputerName     : vault.bitwarden.lan
 RemoteAddress    : 192.168.xxx.xxx
@@ -259,9 +262,9 @@ RemotePort       : 2443
 InterfaceAlias   : Ethernet0
 SourceAddress    : 192.168.xxx.xxx
 TcpTestSucceeded : True
-
+```
 In case of failure
-
+```
 test-netconnection -ComputerName vault.bitwarden.lan -Port 2443
 WARNING : TCP connect to (192.168.xxx.xxx : 2443) failed
 
@@ -274,9 +277,9 @@ SourceAddress          : 192.168.xxx.xxx
 PingSucceeded          : True
 PingReplyDetails (RTT) : 1 ms
 TcpTestSucceeded       : False
-
-in case of failure we need to ensure that the host firewall dont block the communication
-Example on Fedora Like we shutdown the firewall, for other firewalls (ufw or netfilter consult appropriate documentation)
+```
+In case of failure we need to ensure that the host firewall dont block the communication
+#### Example on Fedora Like we shutdown the firewall, for other firewalls (ufw or netfilter consult appropriate documentation)
 ```
 systemctl stop firewalld.service
 ```
@@ -293,12 +296,12 @@ systemctl start firewalld.service
 
 If the problem persist try to check port forwarding in case you are in NAT environnment; on you ISP box or Virtualizer as kvm or VMWare
 
-Example on VMWare
+#### Example on VMWare
 I use NAT connection, to access  the port 2443 on my podman host i need to setup port forwarding
 
 Open Virtual Network Editor as administrator, select your NAT interface and click on NAT settings. Add a port forwarding rule
 
-2443 TCP 192.168.xxx.xxx:2443
++2443 TCP 192.168.xxx.xxx:2443
 
 If something continue to goes wrong check also routing table and third party device as router or repeater
 
