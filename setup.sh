@@ -33,14 +33,14 @@ case "${CERTS}" in
 esac
 
 
-if [[ $(id -u bitwarden) -eq 10500 ]]; then 
-	printf "User bitwarden already exists\n";
-	usermod -s /bin/bash bitwarden
+if [[ $(id -u vaultwarden) -eq 10502 ]]; then 
+	printf "User vaultwarden already exists\n";
+	usermod -s /bin/bash vaultwarden
 else
-	printf "Creation of bitwarden user\n";
-	useradd -m -u 10500 -G docker --shell /bin/bash --comment "Bitwarden RS User Container" --user-group bitwarden
-	loginctl enable-linger 10500
-	systemctl start user@10500.service
+	printf "Creation of vaultwarden user\n";
+	useradd -m -u 10502 -G docker --shell /bin/bash --comment "Vaultwarden RS User Container" --user-group vaultwarden
+	loginctl enable-linger 10502
+	systemctl start user@10502.service
 fi
 
 
@@ -73,7 +73,7 @@ if ! [ -f  "./layer.tar" ]; then
   
 fi
 
-HOMEDIR=$( getent passwd "bitwarden" | cut -d: -f6 )
+HOMEDIR=$( getent passwd "vaultwarden" | cut -d: -f6 )
 DATADIR="${HOMEDIR}/.persistent_storage"
 
 if ! [ -d  "${DATADIR}" ]; then 
@@ -81,45 +81,50 @@ if ! [ -d  "${DATADIR}" ]; then
 	read -e -p "Enter Base DATA directory:" -i "${DATADIR}" DATADIR; 
 fi
 
-if ! [ -d  "${DATADIR}/bitwarden" ]; then
-	mkdir -p "${DATADIR}/bitwarden/project"
-fi
 
-if ! [ -d  "${DATADIR}/bitwarden/certs" ]; then
-	mkdir -p "${DATADIR}/bitwarden/certs"
+if ! [ -d  "${DATADIR}/vaultwarden/certs" ]; then
+	mkdir -p "${DATADIR}/vaultwarden/certs"
 fi	
 
-if ! [ -d  "${DATADIR}/bitwarden/logs" ]; then
-	mkdir -p "${DATADIR}/bitwarden/logs/{bitwarden,httpd}"
+if ! [ -d  "${DATADIR}/vaultwarden//data" ]; then
+	mkdir -p "${DATADIR}/vaultwarden/data"
 fi
 
-if ! [ -f  "${DATADIR}/bitwarden/certs/CA-Bitwarden.pem" ]; then
-	if [ -f  "${SSLSTORE}/CA-Bitwarden.pem" ]; then
-		cp "${SSLSTORE}/CA-Bitwarden.pem" "${DATADIR}/bitwarden/certs/CA-Bitwarden.pem"
+if ! [ -d  "${DATADIR}/vaultwarden/logs" ]; then
+	mkdir -p "${DATADIR}/vaultwarden/logs/{vaultwarden,httpd}"
+fi
+
+if ! [ -d  "${DATADIR}/vaultwarden//project" ]; then
+	mkdir -p "${DATADIR}/vaultwarden/project"
+fi
+
+if ! [ -f  "${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem" ]; then
+	if [ -f  "${SSLSTORE}/CA-Vaultwarden.pem" ]; then
+		cp "${SSLSTORE}/CA-Vaultwarden" "${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem"
 	else
 		openssl req -new -x509 -nodes -days 7300 -outform PEM -newkey rsa:4096 -sha256 \
-		-keyout ${DATADIR}/bitwarden/certs/CA-Bitwarden.key \
-		-out ${DATADIR}/bitwarden/certs/CA-Bitwarden.pem \
+		-keyout ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.key \
+		-out ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem \
 		-subj "/CN=CA Bitwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; 
 		openssl req -nodes -newkey rsa:2048 -sha256 \
-		-keyout ${DATADIR}/bitwarden/certs/bitwarden.key \
-		-out ${DATADIR}/bitwarden/certs/bitwarden.csr \
+		-keyout ${DATADIR}/vaultwarden/certs/vaultwarden.key \
+		-out ${DATADIR}/vaultwarden/certs/vaultwarden.csr \
 		-subj "/CN=${DOMAIN}/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder";
 	fi
 fi
 
-if ! [ -f  "${DATADIR}/bitwarden/certs/bitwarden.pem" ]; then
-	if [ -f  "${SSLSTORE}/bitwarden.pem" ]; then
-		cp "${SSLSTORE}/bitwarden.pem" "${DATADIR}/bitwarden/certs/bitwarden.pem"
+if ! [ -f  "${DATADIR}/vaultwarden/certs/vaultwarden.pem" ]; then
+	if [ -f  "${SSLSTORE}/vaultwarden.pem" ]; then
+		cp "${SSLSTORE}/vaultwarden.pem" "${DATADIR}/vaultwarden/certs/vaultwarden.pem"
 	else
 		openssl x509 -req -outform PEM -CAcreateserial \
-		-in ${DATADIR}/bitwarden/certs/bitwarden.csr \
-		-CA ${DATADIR}/bitwarden/certs/CA-Bitwarden.pem \
-		-CAkey ${DATADIR}/bitwarden/certs/CA-Bitwarden.key \
-		-out ${DATADIR}/bitwarden/certs/bitwarden.pem
+		-in ${DATADIR}/vaultwarden/certs/vaultwarden.csr \
+		-CA ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem \
+		-CAkey ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.key \
+		-out ${DATADIR}/vaultwarden/certs/vaultwarden.pem
 	fi
-	if [ -f  "${SSLSTORE}/bitwarden.key" ]; then
-		cp "${SSLSTORE}/bitwarden.key" "${DATADIR}/bitwarden/certs/bitwarden.key"
+	if [ -f  "${SSLSTORE}/vaultwarden.key" ]; then
+		cp "${SSLSTORE}/vaultwarden.key" "${DATADIR}/vaultwarden/certs/vaultwarden.key"
 	fi
 fi
 
@@ -136,11 +141,11 @@ if [ -d  "${DATADIR}/project" ]; then
 fi
 
 
-chown -R bitwarden: "${DATADIR}" "${HOMEDIR}/.config" "${HOMEDIR}/.local"; chmod -R 770 "${DATADIR}"
+chown -R vaultwarden: "${DATADIR}" "${HOMEDIR}/.config" "${HOMEDIR}/.local"; chmod -R 770 "${DATADIR}"
 
 if [ "$(getenforce)" == "Enforcing" ]; then
 	printf  "selinux is active\n"
-	if [ -f  "/home/bitwarden/.config/selinux.was.setup" ]; then
+	if [ -f  "/home/vaultwarden/.config/selinux.was.setup" ]; then
 		printf  "selinux is already configured \n"
 	else    
 		setsebool -P virt_sandbox_use_netlink 1
@@ -149,8 +154,8 @@ if [ "$(getenforce)" == "Enforcing" ]; then
 		semanage fcontext -a -e "/var/lib/containers" "${HOMEDIR}/.local/share/containers"
 		semanage fcontext -a -e "/etc/containers" "${HOMEDIR}/.config/containers"
 		restorecon -R "${HOMEDIR}/.local/share/containers" "${HOMEDIR}/.config/containers"
-		semanage fcontext -a -t container_file_t "${DATADIR}/bitwarden(/.*)?"
-		restorecon -R "${DATADIR}/bitwarden"
+		semanage fcontext -a -t container_file_t "${DATADIR}/vaultwarden(/.*)?"
+		restorecon -R "${DATADIR}/vaultwarden"
 		touch "${HOMEDIR}/.config/selinux.was.setup"
 	fi
 fi
@@ -162,6 +167,8 @@ envsubst '${HTTPS}' < ./templates/ssl.tpl > ./configurations/ssl.conf
 envsubst '${DOMAIN} ${HTTPS}' < ./templates/Dockerfile.tpl > Dockerfile
 cp -rf . "${DATADIR}/project"
 
+cat /usr/share/containers/containers.conf | sed -e '/# dns_servers = \[\]/a dns_servers = \["1.1.1.1"\]' -e '/# tz = ""/a tz = "local"' -e '/# runtime = "crun"/a runtime = "crun"' -e '/# cgroup_manager = "systemd"/a cgroup_manager = "systemd"' -e'/# events_logger = "journald"/a events_logger = "journald"' -e '/# cgroups = "enabled"/a cgroups = "enabled"' -e'/# cgroupns = "private"/a cgroupns = "private"' -e 's/log_driver = "k8s-file"/#log_driver = "k8s-file"/' -e '/#log_driver = "k8s-file/a log_driver = "journald"' -e'/# log_tag = ""/a log_tag = "vaultwarden"' > /home/vaultwarden/.config/containers/containers.conf
+
 if [[ ${OS}=="" ]]; then
   if [ -f os.version ];then
     OS="$(cat os.version)"
@@ -170,18 +177,18 @@ if [[ ${OS}=="" ]]; then
     printf "${OS}" > os.version
   fi
 fi
-TAGNAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-bitwarden:"${VERSION}"
+TAGNAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-vaultwarden:"${VERSION}"
 printf "Do you want to start build process (y|n)\n"
 read -e -p "Enter your answer " -i "y" VALIDATE
 case "${VALIDATE}" in
 	"y")
 	printf "Executed Command :\n"
-	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}/project/Dockerfile\n"
-	sudo su - bitwarden -c "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}/project/Dockerfile"
+	printf "sudo su - vaultwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -f ${DATADIR}/project/Dockerfile\n"
+	sudo su - vaultwarden -c "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -f ${DATADIR}/project/Dockerfile"
 	;;
 	"n")
 	printf "To launch your built run the following command :\n"
-	printf "sudo su - bitwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -f ${DATADIR}/project/Dockerfile\n"
+	printf "sudo su - vaultwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -f ${DATADIR}/project/Dockerfile\n"
 	exit 0
 	;;
 	*)
@@ -190,22 +197,22 @@ case "${VALIDATE}" in
 	;;
 esac
 
-if [ -f  "${DATADIR}/bitwarden/build.completed" ]; then
+if [ -f  "${DATADIR}/vaultwarden/build.completed" ]; then
     printf "Succesfully build ${TAGNAME}\n"
-	rm -f "${DATADIR}/bitwarden/build.completed"
+	rm -f "${DATADIR}/vaultwarden/build.completed"
 
-	FILENAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-bitwarden.${VERSION}.oci
-	printf "Saving image file under ${DATADIR}/bitwarden/project/${FILENAME}\n"
-	sudo su - bitwarden -c "podman image save --format oci-archive -o ${DATADIR}/bitwarden/project/${FILENAME} localhost/${TAGNAME}"
+	FILENAME="$(tr '[:upper:]' '[:lower:]' <<< ${OS})"-vaultwarden.${VERSION}.oci
+	printf "Saving image file under ${DATADIR}/vaultwarden/project/${FILENAME}\n"
+	sudo su - vaultwarden -c "podman image save --format oci-archive -o ${DATADIR}/vaultwarden/project/${FILENAME} localhost/${TAGNAME}"
 	
-	printf "Launching image file ${DATADIR}/bitwarden/project/${FILENAME}\n"
-	if [[ $(sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user list-unit-files -t service|grep 'container'") != "" ]]; then
+	printf "Launching image file ${DATADIR}/vaultwarden/project/${FILENAME}\n"
+	if [[ $(sudo su - vaultwarden -c "export XDG_RUNTIME_DIR=/run/user/10502 ;systemctl --user list-unit-files -t service|grep 'container'") != "" ]]; then
 		printf "Stopping previous container service\n"
-		sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user stop container-bitwarden.service"
-		sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user disable container-bitwarden.service" 
-		rm -rf ${HOMEDIR}/.config/systemd/user/container-bitwarden.service
+		sudo su - vaultwarden -c "export XDG_RUNTIME_DIR=/run/user/10502 ;systemctl --user stop container-vaultwarden.service"
+		sudo su - vaultwarden -c "export XDG_RUNTIME_DIR=/run/user/10502 ;systemctl --user disable container-vaultwarden.service" 
+		rm -rf ${HOMEDIR}/.config/systemd/user/container-vaultwarden.service
 		pkill conmon
-		#sudo rm -rf /run/user/10500/containers/ 
+		#sudo rm -rf /run/user/10502/containers/ 
 	fi
 	
 	if [ ${HTTPS} -le 1024 ]; then
@@ -229,22 +236,22 @@ if [ -f  "${DATADIR}/bitwarden/build.completed" ]; then
 	  MPORT="${HTTPS}"
 	fi
 	
-	sudo su - bitwarden -c "podman run -d --replace --systemd=always --log-driver=journald --log-opt=tag=bitwarden --sdnotify=conmon --name bitwarden -h bitwarden.lan -v ${DATADIR}/bitwarden:/var/lib/bitwarden:Z -p ${MPORT}:${HTTPS} localhost/${TAGNAME}"
+	sudo su - vaultwarden -c "podman run -d --replace --name vaultwarden -h vaultwarden.lan -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -p 0.0.0.0:${MPORT}:${HTTPS}/tcp localhost/${TAGNAME}"
 	
 	printf "Generating systemd service file\n"
-	if [ -f  "${HOMEDIR}/container-bitwarden.service" ]; then
-		rm -f ${HOMEDIR}/container-bitwarden.service
-		rm -f /etc/systemd/user/container-bitwarden.service
+	if [ -f  "${HOMEDIR}/container-vaultwarden.service" ]; then
+		rm -f ${HOMEDIR}/container-vaultwarden.service
+		rm -f /etc/systemd/user/container-vaultwarden.service
 	fi
-	sudo su - bitwarden -c "podman generate systemd -f -n bitwarden --restart-policy=always"
+	sudo su - vaultwarden -c "podman generate systemd -f -n vaultwarden --restart-policy=always"
 	
-	printf "Starting systemd container-bitwarden.service as user bitwarden\n"
-	cp  -f ${HOMEDIR}/container-bitwarden.service /etc/systemd/user/container-bitwarden.service
-	sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl daemon-reload --user"
-	sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user enable /etc/systemd/user/container-bitwarden.service"
-	sudo su - bitwarden -c "podman container stop bitwarden"
-	sudo su - bitwarden -c "export XDG_RUNTIME_DIR=/run/user/10500 ;systemctl --user start container-bitwarden.service"
+	printf "Starting systemd container-vaultwarden.service as user vaultwarden\n"
+	cp  -f ${HOMEDIR}/container-vaultwarden.service /etc/systemd/user/container-vaultwarden.service
+	sudo su - vaultwarden -c "export XDG_RUNTIME_DIR=/run/user/10502 ;systemctl daemon-reload --user"
+	sudo su - vaultwarden -c "export XDG_RUNTIME_DIR=/run/user/10502 ;systemctl --user enable /etc/systemd/user/container-vaultwarden.service"
+	sudo su - vaultwarden -c "podman container stop vaultwarden"
+	sudo su - vaultwarden -c "export XDG_RUNTIME_DIR=/run/user/10502 ;systemctl --user start container-vaultwarden.service"
 else
 	printf "Something goes wrong during build operation ${TAGNAME}\n"
 fi
-usermod -s /sbin/nologin bitwarden
+usermod -s /sbin/nologin vaultwarden
