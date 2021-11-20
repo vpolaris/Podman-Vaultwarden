@@ -47,8 +47,8 @@ git checkout ${tag}
 RUN cd /tmp/vault; git submodule update --recursive --init
 RUN curl -Lo /tmp/vault/v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \
 git -C /tmp/vault apply /tmp/vault/v2.24.0.patch
-RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts; \
-npm run sub:init --prefix /tmp/vault; \
+RUN mkdir ~/.ssh/; ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts; \
+#npm run sub:init --prefix /tmp/vault; \
 npm install npm@7 --prefix /tmp/vault
 
 RUN npm ci --legacy-peer-deps --prefix /tmp/vault; \
