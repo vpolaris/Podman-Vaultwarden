@@ -47,8 +47,8 @@ git checkout ${tag}
 RUN cd /tmp/vault; git submodule update --recursive --init
 RUN curl -Lo /tmp/vault/v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \
 git -C /tmp/vault apply /tmp/vault/v2.24.0.patch
-RUN npm run sub:init --prefix /tmp/vault;npm install --prefix /tmp/vault
-RUN npm audit fix --prefix /tmp/vault;npm run dist --prefix /tmp/vault
+RUN npm run sub:init --prefix /tmp/vault;npm install npm@7 --prefix /tmp/vault;npm ci --legacy-peer-deps --prefix /tmp/vault
+RUN npm audit fix --legacy-peer-deps --prefix /tmp/vault || true ;npm run dist:oss:selfhost --prefix /tmp/vault
 
 
 #Create Vaultwarden user and admin container manager
