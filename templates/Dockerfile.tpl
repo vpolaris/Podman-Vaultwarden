@@ -1,6 +1,6 @@
 FROM scratch
 LABEL maintainer="szfd9g <szfd9g@live.fr>"                    
-ENV DISTTAG=f33container FGC=f33 FBR=f33 container=podman
+ENV DISTTAG=f34container FGC=f34 FBR=f34 container=podman
 ENV DNFOPTION="--setopt=install_weak_deps=False --nodocs"
 ARG admpass
 ARG OS
@@ -47,8 +47,13 @@ git checkout ${tag}
 RUN cd /tmp/vault; git submodule update --recursive --init
 RUN curl -Lo /tmp/vault/v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \
 git -C /tmp/vault apply /tmp/vault/v2.24.0.patch
-RUN npm run sub:init --prefix /tmp/vault;npm install npm@7 --prefix /tmp/vault;npm ci --legacy-peer-deps --prefix /tmp/vault
-RUN npm audit fix --legacy-peer-deps --prefix /tmp/vault || true ;npm run dist:oss:selfhost --prefix /tmp/vault
+RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts; \
+npm run sub:init --prefix /tmp/vault; \
+npm install npm@7 --prefix /tmp/vault
+
+RUN npm ci --legacy-peer-deps --prefix /tmp/vault; \
+npm audit fix --legacy-peer-deps --prefix /tmp/vault || true; \
+npm run dist:oss:selfhost --prefix /tmp/vault
 
 
 #Create Vaultwarden user and admin container manager
