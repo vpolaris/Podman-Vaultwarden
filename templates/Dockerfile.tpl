@@ -42,7 +42,7 @@ RUN git clone https://github.com/dani-garcia/vaultwarden.git /tmp/vaultwarden; \
 
 RUN git clone https://github.com/bitwarden/web.git /tmp/vault; \
 cd /tmp/vault; \
-tag="$(git tag -l "v2.24*" | tail -n1)"; export tag; echo "Selected tag version is ${tag}"; \
+tag="$(git tag -l "v2.24.0" | tail -n1)"; export tag; echo "Selected tag version is ${tag}"; \
 git checkout ${tag}
 RUN cd /tmp/vault; git submodule update --recursive --init
 RUN curl -Lo /tmp/vault/v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \

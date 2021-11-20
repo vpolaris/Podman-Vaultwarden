@@ -47,7 +47,7 @@ fi
 if ! [ -f  "./layer.tar" ]; then
   proc="$(uname -m)"
   printf "Select Base Image\n"
-  printf "1 - Fedora 33\n" 
+  printf "1 - Fedora 34\n" 
   printf "2 - Centos 8\n"
   read -e -p "Enter nummber: " -i "1" RELEASE
   case "${RELEASE}" in
