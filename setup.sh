@@ -1,7 +1,7 @@
 #!/bin/bash
 ADMTKN="$(tr -cd [:alnum:] < /dev/urandom | fold -w 48 | head -n 1)"
 ADMINPASS="$(tr -cd [:alnum:] < /dev/urandom | fold -w 16 | head -n 1)"
-DOMAIN="vault.bitwarden.lan"
+DOMAIN="vault.vaultwarden.lan"
 HTTPS="443"
 
 SSLSTORE="$HOME/.ssl"
@@ -52,7 +52,7 @@ if ! [ -f  "./layer.tar" ]; then
   read -e -p "Enter nummber: " -i "1" RELEASE
   case "${RELEASE}" in
 	"1")
-		page="https://fr2.rpmfind.net/linux/fedora/linux/releases/33/Container/${proc}/images/"
+		page="https://fr2.rpmfind.net/linux/fedora/linux/releases/34/Container/${proc}/images/"
 		image="$(curl -s $page | grep -e "Fedora-Container-Base-.*.tar.xz"|sed -e 's!^.*\(Fedora-Container-Base.*.tar.xz\).*$!\1!m')"
 		OS="Fedora"
 		;;
@@ -105,7 +105,7 @@ if ! [ -f  "${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem" ]; then
 		openssl req -new -x509 -nodes -days 7300 -outform PEM -newkey rsa:4096 -sha256 \
 		-keyout ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.key \
 		-out ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem \
-		-subj "/CN=CA Bitwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; 
+		-subj "/CN=CA Vaultwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; 
 		openssl req -nodes -newkey rsa:2048 -sha256 \
 		-keyout ${DATADIR}/vaultwarden/certs/vaultwarden.key \
 		-out ${DATADIR}/vaultwarden/certs/vaultwarden.csr \

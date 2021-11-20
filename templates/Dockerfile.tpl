@@ -35,23 +35,23 @@ sed -i 's/failovermethod=priority/#failovermethod=priority/g' /etc/yum.repos.d/n
 dnf -y install nodejs $DNFOPTION
 
 #Compile the back-end
-RUN git clone https://github.com/dani-garcia/vaultwarden.git /tmp/bitwarden; \
-~/.cargo/bin/cargo build --features sqlite --release --manifest-path=/tmp/bitwarden/Cargo.toml
+RUN git clone https://github.com/dani-garcia/vaultwarden.git /tmp/vaultwarden; \
+~/.cargo/bin/cargo build --features sqlite --release --manifest-path=/tmp/vaultwarden/Cargo.toml
 
 #Compile the front-end
 
 RUN git clone https://github.com/bitwarden/web.git /tmp/vault; \
 cd /tmp/vault; \
-tag="$(git tag -l "v2.20*" | tail -n1)"; export tag; echo "Selected tag version is ${tag}"; \
+tag="$(git tag -l "v2.24*" | tail -n1)"; export tag; echo "Selected tag version is ${tag}"; \
 git checkout ${tag}
 RUN cd /tmp/vault; git submodule update --recursive --init
-RUN curl -Lo /tmp/vault/v2.20.4.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.20.4.patch; \
-git -C /tmp/vault apply /tmp/vault/v2.20.4.patch
+RUN curl -Lo /tmp/vault/v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \
+git -C /tmp/vault apply /tmp/vault/v2.24.0.patch
 RUN npm run sub:init --prefix /tmp/vault;npm install --prefix /tmp/vault
 RUN npm audit fix --prefix /tmp/vault;npm run dist --prefix /tmp/vault
 
 
-#Create vaultwarden user and admin container manager
+#Create Vaultwarden user and admin container manager
 RUN adduser -u 10502 --shell /bin/false --comment "Vaultwarden RS User Service" --user-group -M vaultwarden
 
 RUN if [[ -z "$admpass" ]] ; then \
@@ -60,19 +60,19 @@ else adduser --shell /bin/bash --comment "Admin RS server" --user-group -G wheel
 
 
 #Create Directory Structure
-RUN if ! [ -d  "var/lib/vaultwarden/data" ]; then	mkdir -p /var/lib/vaultwarden/{data,certs,logs};mkdir -p /var/lib/vaultwarden/logs/{bitwarden,httpd}; fi
-RUN mkdir -p /etc/bitwarden /home/admin/.ssl; \
+RUN if ! [ -d  "var/lib/vaultwarden/data" ]; then	mkdir -p /var/lib/vaultwarden/{data,certs,logs};mkdir -p /var/lib/vaultwarden/logs/{vaultwarden,httpd}; fi
+RUN mkdir -p /etc/vaultwarden /home/admin/.ssl; \
 chown -R vaultwarden:vaultwarden /var/lib/vaultwarden/; \
 chown -R admin:vaultwarden /home/admin/.ssl
 
 #Move files and set permissions
 
-#Bitwarden RS server
-RUN mv /tmp/bitwarden/target/release/vaultwarden /usr/local/bin/bitwarden
-COPY ./configurations/.env /etc/bitwarden/.env
-RUN chmod -R 750 /usr/local/bin/bitwarden /var/lib/vaultwarden/; \
-chmod -R 770 /etc/bitwarden/; \
-chown -R root:vaultwarden /usr/local/bin/bitwarden /etc/bitwarden/
+#vaultwarden RS server
+RUN mv /tmp/vaultwarden/target/release/vaultwarden /usr/local/bin/vaultwarden
+COPY ./configurations/.env /etc/vaultwarden/.env
+RUN chmod -R 750 /usr/local/bin/vaultwarden /var/lib/vaultwarden/; \
+chmod -R 770 /etc/vaultwarden/; \
+chown -R root:vaultwarden /usr/local/bin/vaultwarden /etc/vaultwarden/
 
 #Apache
 COPY ./configurations/ssl.conf /etc/httpd/conf.d/ssl.conf
@@ -91,8 +91,8 @@ openssl req -new -x509 -nodes -days 7300 -outform PEM -newkey rsa:4096 -sha256 \
 cp /home/admin/.ssl/CA-Vaultwarden.* /var/lib/vaultwarden/certs; \
 else cp /var/lib/vaultwarden/certs/CA-Vaultwarden.pem /home/admin/.ssl/CA-Vaultwarden.pem; fi
 
-RUN if [ -f  "/var/lib/valtwarden/certs/CA-Bitwarden.key" ]; then \
-cp /var/lib/vaultwarden/certs/CA-Bitwarden.key /home/admin/.ssl/CA-Vaultwarden.key;fi
+RUN if [ -f  "/var/lib/valtwarden/certs/CA-Vaultwarden.key" ]; then \
+cp /var/lib/vaultwarden/certs/CA-vaultwarden.key /home/admin/.ssl/CA-Vaultwarden.key;fi
 
 RUN if ! [ -f  "/var/lib/vaultwarden/certs/vaultwarden.pem" ]; then \
 openssl req -nodes -newkey rsa:2048 -sha256 \
@@ -130,13 +130,13 @@ COPY ./services/timer.conf etc/systemd/system/dnf-automatic-install.timer.d
 
 #Systemd configuration
 RUN mkdir /etc/systemd/system/{httpd.service.d,system.slice.d}
-COPY ./services/bitwarden.service /etc/systemd/system/bitwarden.service
-COPY ./services/bitwarden-httpd.slice /etc/systemd/system/bitwarden-httpd.slice
+COPY ./services/vaultwarden.service /etc/systemd/system/vaultwarden.service
+COPY ./services/vaultwarden-httpd.slice /etc/systemd/system/vaultwarden-httpd.slice
 COPY ./services/healthcheck.timer /etc/systemd/system/healthcheck.timer
 COPY ./services/slice.conf /etc/systemd/system/httpd.service.d/slice.conf
 COPY ./services/memorymax.conf /etc/systemd/system/system.slice.d/memorymax.conf
-RUN chmod 644 /etc/systemd/system/{bitwarden.service,healthcheck.timer,bitwarden-httpd.slice} /etc/systemd/system/httpd.service.d/slice.conf
-RUN systemctl enable bitwarden.service httpd.service dnf-automatic-install.timer
+RUN chmod 644 /etc/systemd/system/{vaultwarden.service,healthcheck.timer,vaultwarden-httpd.slice} /etc/systemd/system/httpd.service.d/slice.conf
+RUN systemctl enable vaultwarden.service httpd.service dnf-automatic-install.timer
 CMD ["/usr/sbin/init"]
 RUN if ! [ -s /etc/pki/tls/certs/localhost.crt ]; then \
 rm -f /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key; \
@@ -152,7 +152,7 @@ else dnf -y remove g++ --setopt=clean_requirements_on_remove=1; fi
 
 
 RUN rm -f /tmp/sh.rustup.rs /tmp/setup_14.x; \
-rm -rf /tmp/bitwarden/ /tmp/vault; \
+rm -rf /tmp/vaultwarden/ /tmp/vault; \
 yes | ~/.cargo/bin/rustup self uninstall; \
 rm -rf ~/.config/ ~/.node-gyp/ ~/.npm ~/anaconda-* ~/original-ks.cfg; \
 dnf -y remove nodejs git gcc openssl-devel python2 --setopt=clean_requirements_on_remove=1; \
