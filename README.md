@@ -3,7 +3,7 @@
 
 [![N|Solid](https://raw.githubusercontent.com/containers/podman/master/logo/podman-logo.png)](https://podman.io/getting-started/)
 
-This project want to build a podman container to host a complete solution of [Vaultwarden API][bitwarden-rs] and a [Web vault][Web-vault]: interface. Which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
+This project want to build a podman container to host a complete solution of [Vaultwarden API][vaultwarden-rs] and a [Web vault][Web-vault]: interface. Which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
 
 - Podman don't need a daemon to run a container 
 - Vaultwarden API don't need to be register
@@ -66,7 +66,7 @@ cd Podman-Bitwarden
 chmod u+x setup.sh; sudo ./setup.sh
 ```
 
-What the setup does? It creates a dedicated user named vaultwarden on the host machine, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launched every time the host server is restarted. The service will be owned by the bitwarden user
+What the setup does? It creates a dedicated user named vaultwarden on the host machine, this user will be responsible to build the image, store persistent data and run the container with the less privileges possible. A systemd service will be created and the container will be launched every time the host server is restarted. The service will be owned by the vaultwarden user
 
 + No login or sudo available
 + Only the rights to manage containers
@@ -74,7 +74,7 @@ What the setup does? It creates a dedicated user named vaultwarden on the host m
 Answer the questions
 
 + TOKEN and Admin password are generated randomly, you can modify their values when asked
-+ Domain name, by default will be vault.bitwarden.lan, this name has to be resolvable by all machines accessing the vault. You can use the hosts file but for a broader usage it's preferable to use a DNS record
++ Domain name, by default will be vault.vaultwarden.lan, this name has to be resolvable by all machines accessing the vault. You can use the hosts file but for a broader usage it's preferable to use a DNS record
 + Port number, 443 by default (https)
 + The tag version, this number will be append to the image name
 + Certificate, if you have a set of PEM certificates (CA and web server) and you want to use it to setup the apache server, answer yes and indicate their locations. Only useful to the first run as these certificates will be conserved between each build
@@ -83,10 +83,10 @@ At the end of questions, you can start the process immediately or copy the infor
 
 ## Acces
 you can access by default to the vault via
-https://vault.bitwarden.lan
+https://vault.vaultwarden.lan
 or the domain name you provided
 
-[![N|Solid](https://github.com/vpolaris/Podman-Bitwarden/blob/main/docs/bitwarden_logon_screen.PNG)
+[![N|Solid](https://github.com/vpolaris/Podman-Bitwarden/blob/main/docs/vaultwarden_logon_screen.PNG)
 
 ## Manage the container
 
@@ -135,7 +135,7 @@ you can monitor the httpd service through 4 log files located under the director
 ## Ressource Control
 The maximum amount of memory usage for the container was fixed at 300MB, 150MB for the application and 150MB for system, allocated CPU has been set to 25% for application.
 That's suit well a familly needs. for groups of 10 or more users you may tune this values.
-For application the file to adjust is services/bitwarden-httpd.slice and for system you can set the value in services/memorymax.conf. Normally the memory used is arround 130MB on the host in normal operation mode
+For application the file to adjust is services/vaultwarden-httpd.slice and for system you can set the value in services/memorymax.conf. Normally the memory used is arround 130MB on the host in normal operation mode
 
 ## Testing
 Working on :
@@ -147,39 +147,39 @@ Working on :
 
 We consider this two options
 
-hostname is vault.bitwarden.lan and we forward communication through port 2443 TCP
+hostname is vault.vaultwarden.lan and we forward communication through port 2443 TCP
 
-on the podman host, check if both httpd and bitwarden service are running inside the container
+on the podman host, check if both httpd and vaultwarden service are running inside the container
 
 ```
-usermod -s /bin/bash bitwarden (or vaultwarden for most recent release)
-sudo su podman exec -ti bitwarden /bin/bash
-systemctl status bitwarden httpd
+usermod -s /bin/bash vaultwarden (or vaultwarden for most recent release)
+sudo su podman exec -ti vaultwarden /bin/bash
+systemctl status vaultwarden httpd
 ```
 A good result should be:
 ```
-systemctl status bitwarden httpd
-● bitwarden.service - Bitwarden RS server
-     Loaded: loaded (/etc/systemd/system/bitwarden.service; enabled; vendor preset: disabled)
+systemctl status vaultwarden httpd
+● vaultwarden.service - Bitwarden RS server
+     Loaded: loaded (/etc/systemd/system/vaultwarden.service; enabled; vendor preset: disabled)
      Active: active (running) since Wed 2021-08-18 14:36:09 CEST; 25min ago
-       Docs: https://github.com/dani-garcia/bitwarden_rs
-   Main PID: 17 (bitwarden)
+       Docs: https://github.com/dani-garcia/vaultwarden_rs
+   Main PID: 17 (vaultwarden)
       Tasks: 16 (limit: 307)
      Memory: 6.2M
         CPU: 148ms
-     CGroup: /bitwarden.slice/bitwarden-httpd.slice/bitwarden.service
-             └─17 /usr/local/bin/bitwarden
+     CGroup: /vaultwarden.slice/vaultwarden-httpd.slice/vaultwarden.service
+             └─17 /usr/local/bin/vaultwarden
 
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]: Configured for production.
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => address: 127.0.0.1
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => port: 8000
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => log: critical
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => workers: 8
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => secret key: private-cookies disabled
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => limits: forms = 32KiB
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => keep-alive: 5s
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]:     => tls: disabled
-Aug 18 14:36:09 vaultwarden.lan bitwarden[17]: Rocket has launched from http://127.0.0.1:8000
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]: Configured for production.
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => address: 127.0.0.1
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => port: 8000
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => log: critical
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => workers: 8
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => secret key: private-cookies disabled
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => limits: forms = 32KiB
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => keep-alive: 5s
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]:     => tls: disabled
+Aug 18 14:36:09 vaultwarden.lan vaultwarden[17]: Rocket has launched from http://127.0.0.1:8000
 
 ● httpd.service - The Apache HTTP Server
      Loaded: loaded (/usr/lib/systemd/system/httpd.service; enabled; vendor preset: disabled)
@@ -192,7 +192,7 @@ Aug 18 14:36:09 vaultwarden.lan bitwarden[17]: Rocket has launched from http://1
       Tasks: 130 (limit: 307)
      Memory: 14.7M
         CPU: 1.365s
-     CGroup: /bitwarden.slice/bitwarden-httpd.slice/httpd.service
+     CGroup: /vaultwarden.slice/vaultwarden-httpd.slice/httpd.service
              ├─ 38 /usr/sbin/httpd -DFOREGROUND
              ├─ 39 /usr/sbin/httpd -DFOREGROUND
              ├─ 40 /usr/sbin/httpd -DFOREGROUND
@@ -207,7 +207,7 @@ Aug 18 14:36:10 vaultwarden.lan systemd[1]: Started The Apache HTTP Server.
 
 If you see some errros, you can try to restart both service 
 ```
-systemctl restart bitwarden httpd
+systemctl restart vaultwarden httpd
 ```
 Run the status command again, if the problem still persist, please open a bug request
 
@@ -222,12 +222,12 @@ first we use nslookup to resolve our hostname, be aware that the virtual host co
 the host of the podman container needs to be different of given virtual host. from a client machine try:
 
 ```
-nslookup vault.bitwarden.lan
- nslookup vault.bitwarden.lan
+nslookup vault.vaultwarden.lan
+ nslookup vault.vaultwarden.lan
 Server:         127.0.0.53
 Address:        127.0.0.53#53
 
-Name:   vault.bitwarden.lan
+Name:   vault.vaultwarden.lan
 Address: 192.168.xxx.xxx
 
 ```
@@ -235,7 +235,7 @@ This is what a good answer looks like
 
 If you failed to resolve your hostname, you can add an entry in /etc/hosts for Linux or C:\Windows\System32\drivers\etc\hosts for Windows (you need admin rights in both case
 this entry shoube this format
-+ 192.168.xxx.xxx vault.bitwarden.lan
++ 192.168.xxx.xxx vault.vaultwarden.lan
 
 The most reliable solution is to add a DNS entry in you DNS server configuration
 
@@ -249,14 +249,14 @@ Ncat: 0 bytes sent, 0 bytes received in 0.01 seconds.
 ```
 In case of  failure
 ```
-nc -zv vault.bitwarden.lan 2443
+nc -zv vault.vaultwarden.lan 2443
 Ncat: Version 7.80 ( https://nmap.org/ncat )
 Ncat: Connection refused.
 ```
 On Windows Platform
 ```
-test-netconnection -ComputerName vault.bitwarden.lan -Port 2443                                                                                                                                                             
-ComputerName     : vault.bitwarden.lan
+test-netconnection -ComputerName vault.vaultwarden.lan -Port 2443                                                                                                                                                             
+ComputerName     : vault.vaultwarden.lan
 RemoteAddress    : 192.168.xxx.xxx
 RemotePort       : 2443
 InterfaceAlias   : Ethernet0
@@ -265,11 +265,11 @@ TcpTestSucceeded : True
 ```
 In case of failure
 ```
-test-netconnection -ComputerName vault.bitwarden.lan -Port 2443
+test-netconnection -ComputerName vault.vaultwarden.lan -Port 2443
 WARNING : TCP connect to (192.168.xxx.xxx : 2443) failed
 
 
-ComputerName           : vault.bitwarden.lan
+ComputerName           : vault.vaultwarden.lan
 RemoteAddress          : 192.168.xxx.xxx
 RemotePort             : 2443
 InterfaceAlias         : Ethernet0
@@ -309,8 +309,8 @@ If something continue to goes wrong check also routing table and third party dev
 I found my inspiration from these web sites
 
 **For Vaultwarden and the vault combined**
-+ https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
-+ https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
++ https://fiat-tux.fr/2019/01/14/installer-un-serveur-vaultwarden_rs/ 
++ https://illuad.fr/2020/06/11/install-a-vaultwarden-rs-server.html
 
 **Ressource Control Group and Timer**
 + https://medium.com/horrible-hacks/using-systemd-as-a-better-cron-a4023eea996d
@@ -323,8 +323,8 @@ AGPL-3.0 License
 
 [//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
 
-   [Web-vault]: https://bitwarden.com/
-   [bitwarden-rs]: <https://github.com/dani-garcia/vaultwarden/wiki>
+   [Web-vault]: https://vaultwarden.com/
+   [vaultwarden-rs]: <https://github.com/dani-garcia/vaultwarden/wiki>
    [gcc]: <https://gcc.gnu.org/>
    [npm]: <https://docs.npmjs.com/about-npm>
    [Rust]: <https://www.rust-lang.org/>
