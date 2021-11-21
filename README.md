@@ -12,11 +12,11 @@ This project want to build a podman container to host a complete solution of [Va
 Make sure you can do the difference between the official clients and the Web Vault powered by Bitwarden Inc and the unofficial Vaultwarden API a fork written in Rust by his author Dani Garcia.
 
 + Note :
-Due to new denomination of Vaultwarden, I 'll change progessively named object accordingly.
+Due to new denomination of Vaultwarden, I changed named object accordingly.
 
 ## Features
 
-- Support Fedora 33 and CentOS 8 as image containers
+- Support Fedora 34 and CentOS 8 as image containers
 - Vaultwarden and the Web vault are built from sources
 - You can import your own certificates or create a self-signed set
 - Token and password are automatically generated
@@ -26,7 +26,7 @@ Podman can be used in almost all modern Linux distribution even in [WSL2]. Fedor
 
 > the main goal is to build from scratch all the stuff under you eyes.
 > we pull image container directly from well known repositories
-> https://fr2.rpmfind.net/linux/fedora/linux/releases/33/Container for Fedora
+> https://fr2.rpmfind.net/linux/fedora/linux/releases/34/Container for Fedora
 > https://cloud.centos.org/centos/8/ for CentOS8
 > clone sources from there git repositories
 > All tools are fresh installed
