@@ -8,6 +8,8 @@ ARG HTTPS
 #Add Fedora image Container from Fedora-Container-Base-33-1.2.x86_64.tar.xz
 ADD layer.tar / 
 
+#Create Vaultwarden user and admin container manager
+RUN printf "Create Vaultwarden user \n";adduser -u 10502 --shell /bin/bash --comment "Vaultwarden RS User Service" --user-group -m vaultwarden
 #System update
 RUN dnf makecache; \
 dnf -y upgrade dnf rpm yum libmodulemd $DNFOPTION; \
@@ -31,34 +33,46 @@ ENV PATH="~/.cargo/bin:${PATH}"
 #Install Node.JS and npm
 RUN curl -Lo /tmp/setup_14.x -sSf https://rpm.nodesource.com/setup_14.x; \
 bash -E /tmp/setup_14.x; \
-sed -i 's/failovermethod=priority/#failovermethod=priority/g' /etc/yum.repos.d/nodesource-fc33.repo; \
+sed -i 's/failovermethod=priority/#failovermethod=priority/g' /etc/yum.repos.d/nodesource-fc34.repo; \
 dnf -y install nodejs $DNFOPTION
+RUN npm -g install npm@7
 
-#Compile the back-end
+# Compile the back-end
 RUN git clone https://github.com/dani-garcia/vaultwarden.git /tmp/vaultwarden; \
 ~/.cargo/bin/cargo build --features sqlite --release --manifest-path=/tmp/vaultwarden/Cargo.toml
 
+
+RUN mkdir /tmp/vault
+
+
 #Compile the front-end
 
-RUN git clone https://github.com/bitwarden/web.git /tmp/vault; \
-cd /tmp/vault; \
-tag="$(git tag -l "v2.24.0" | tail -n1)"; export tag; echo "Selected tag version is ${tag}"; \
-git checkout ${tag}
-RUN cd /tmp/vault; git submodule update --recursive --init
-RUN curl -Lo /tmp/vault/v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \
-git -C /tmp/vault apply /tmp/vault/v2.24.0.patch
-RUN mkdir ~/.ssh/; ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts; \
-#npm run sub:init --prefix /tmp/vault; \
-npm install npm@7 --prefix /tmp/vault
+# RUN mkdir ~/.ssh/; ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts 
 
-RUN npm ci --legacy-peer-deps --prefix /tmp/vault; \
-npm audit fix --legacy-peer-deps --prefix /tmp/vault || true; \
-npm run dist:oss:selfhost --prefix /tmp/vault
+RUN printf "Clone Web vault\n";git clone https://github.com/bitwarden/web.git /tmp/vault
+
+RUN chown -R vaultwarden:vaultwarden /tmp/vault
+
+USER vaultwarden
+# RUN mkdir -p ~/.ssh/; ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts 
+WORKDIR /tmp/vault
+
+RUN printf "Select Branch\n";git pull origin master
+RUN printf "Select Version\n";git checkout v2.24.1
+RUN printf "Update Web vault\n";git submodule update --recursive --init
+
+RUN printf "Apply patch\n"; \
+curl -Lo v2.24.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.24.0.patch; \
+chown vaultwarden:vaultwarden v2.24.0.patch; \
+git apply v2.24.0.patch --reject
+
+RUN printf "NPM Compile\n"npm ci --legacy-peer-deps; \
+npm audit fix --legacy-peer-deps || true; \
+npm run dist:oss:selfhost
 
 
-#Create Vaultwarden user and admin container manager
-RUN adduser -u 10502 --shell /bin/false --comment "Vaultwarden RS User Service" --user-group -M vaultwarden
-
+USER root
+WORKDIR /
 RUN if [[ -z "$admpass" ]] ; then \
 user_password="$(tr -cd [:alnum:] < /dev/urandom | fold -w 16 | head -n 1)";export user_password; adduser --shell /bin/bash --comment "Admin RS server" --user-group -G wheel -m --password $(mkpasswd -H md5 ${user_password}) admin;echo "Admin RS Password is ${user_password}"; \
 else adduser --shell /bin/bash --comment "Admin RS server" --user-group -G wheel -m --password $(openssl passwd -1 ${admpass}) admin;echo "Admin RS Password is ${admpass}";fi
