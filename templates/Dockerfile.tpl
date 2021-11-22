@@ -80,6 +80,7 @@ else adduser --shell /bin/bash --comment "Admin RS server" --user-group -G wheel
 
 #Create Directory Structure
 RUN if ! [ -d  "var/lib/vaultwarden/data" ]; then	mkdir -p /var/lib/vaultwarden/{data,certs,logs};mkdir -p /var/lib/vaultwarden/logs/{vaultwarden,httpd}; fi
+RUN if ! [ -d  "var/lib/vaultwarden/logs/vaultwarden" ]; then	mkdir -p /var/lib/vaultwarden/logs/{vaultwarden,httpd}; fi
 RUN mkdir -p /etc/vaultwarden /home/admin/.ssl; \
 chown -R vaultwarden:vaultwarden /var/lib/vaultwarden/; \
 chown -R admin:vaultwarden /home/admin/.ssl

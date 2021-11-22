@@ -136,6 +136,10 @@ if ! [ -d  "${HOMEDIR}/.local/share/containers" ]; then
 	mkdir -p "${HOMEDIR}/.local/share/containers"
 fi
 
+if ! [ -d  "./configurations" ]; then
+	mkdir "./configurations"
+fi
+
 if [ -d  "${DATADIR}/project" ]; then
 	rm -rf "${DATADIR}/project"
 fi
