@@ -38,6 +38,11 @@ if [[ $(id -u vaultwarden) -eq 10502 ]]; then
 	usermod -s /bin/bash vaultwarden
 else
 	printf "Creation of vaultwarden user\n";
+    if [[ "$(getent group docker)"!="" ]];then 
+        printf "group docker exists\n"
+    else
+        groupadd docker
+    fi
 	useradd -m -u 10502 -G docker --shell /bin/bash --comment "Vaultwarden RS User Container" --user-group vaultwarden
 	loginctl enable-linger 10502
 	systemctl start user@10502.service
