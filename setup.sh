@@ -3,7 +3,7 @@ ADMTKN="$(tr -cd [:alnum:] < /dev/urandom | fold -w 48 | head -n 1)"
 ADMINPASS="$(tr -cd [:alnum:] < /dev/urandom | fold -w 16 | head -n 1)"
 DOMAIN="vault.vaultwarden.lan"
 HTTPS="443"
-
+DB_BACKUP="enabled"
 SSLSTORE="$HOME/.ssl"
 VERSION="1.00"
 
@@ -17,7 +17,7 @@ read -e -p "Enter ADMIN Password:" -i "${ADMINPASS}" ADMINPASS
 read -e -p "Enter Domain name for Vault Website:" -i "${DOMAIN}" DOMAIN
 read -e -p "Enter https port number:" -i "${HTTPS}" HTTPS
 read -e -p "Enter tag version:" -i "${VERSION}" VERSION
-
+read -e -p "DB Backup (enabled/disabled):" -i "${DB_BACKUP}" DB_BACKUP
 read -e -p "Do you have certificates to push ? (y|n) " -i "n" CERTS
 case "${CERTS}" in
 	"y")
@@ -122,7 +122,7 @@ if ! [ -f  "${DATADIR}/vaultwarden/certs/vaultwarden.pem" ]; then
 	if [ -f  "${SSLSTORE}/vaultwarden.pem" ]; then
 		cp "${SSLSTORE}/vaultwarden.pem" "${DATADIR}/vaultwarden/certs/vaultwarden.pem"
 	else
-		openssl x509 -req -outform PEM -CAcreateserial \
+		openssl x509 -req -days 730 -outform PEM -CAcreateserial \
 		-in ${DATADIR}/vaultwarden/certs/vaultwarden.csr \
 		-CA ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem \
 		-CAkey ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.key \
@@ -169,11 +169,11 @@ if [ "$(getenforce)" == "Enforcing" ]; then
 	fi
 fi
 
-export ADMTKN="${ADMTKN}" DOMAIN="${DOMAIN}" HTTPS="${HTTPS}"
+export ADMTKN="${ADMTKN}" DOMAIN="${DOMAIN}" HTTPS="${HTTPS}" DB_BACKUP="${DB_BACKUP}"
 envsubst '${ADMTKN} ${DOMAIN}'< ./templates/env.tpl > ./configurations/.env
 envsubst '${DOMAIN} ${HTTPS}' < ./templates/vhost.tpl > ./configurations/vhost.conf
 envsubst '${HTTPS}' < ./templates/ssl.tpl > ./configurations/ssl.conf
-envsubst '${DOMAIN} ${HTTPS}' < ./templates/Dockerfile.tpl > Dockerfile
+envsubst '${DB_BACKUP} ${DOMAIN} ${HTTPS}' < ./templates/Dockerfile.tpl > Dockerfile
 cp -rf . "${DATADIR}/project"
 
 cat /usr/share/containers/containers.conf | sed -e '/# dns_servers = \[\]/a dns_servers = \["1.1.1.1"\]' -e '/# tz = ""/a tz = "local"' -e '/# runtime = "crun"/a runtime = "crun"' -e '/# cgroup_manager = "systemd"/a cgroup_manager = "systemd"' -e'/# events_logger = "journald"/a events_logger = "journald"' -e '/# cgroups = "enabled"/a cgroups = "enabled"' -e'/# cgroupns = "private"/a cgroupns = "private"' -e 's/log_driver = "k8s-file"/#log_driver = "k8s-file"/' -e '/#log_driver = "k8s-file/a log_driver = "journald"' -e'/# log_tag = ""/a log_tag = "vaultwarden"' > /home/vaultwarden/.config/containers/containers.conf

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run DB Backup script at 02:00 AM every day
+Requires=db-backup.service
+[Timer]
+Unit=db-backup.service
+OnCalendar=*-*-* 02:00:00
+#RandomizedDelaySec=5m
+AccuracySec=20s
+persistence=yes
+
+[Install]
+WantedBy=timers.target

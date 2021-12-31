@@ -1,0 +1,16 @@
+[Unit]
+Description=DB Backup service
+Wants=db-backup.timer
+
+[Service]
+                              
+Type=simple                                          
+EnvironmentFile=/opt/scripts/.env
+ExecStart=/opt/scripts/sql.backup.py  
+User=vaultwarden       
+Nice=19
+IOSchedulingClass=2
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=db-backup.timer
