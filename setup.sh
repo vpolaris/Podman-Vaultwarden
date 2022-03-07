@@ -5,7 +5,7 @@ DOMAIN="vault.vaultwarden.lan"
 HTTPS="443"
 DB_BACKUP="enabled"
 SSLSTORE="$HOME/.ssl"
-VERSION="1.00"
+VERSION="latest"
 
 if [ "${EUID}" -ne 0 ]; then 
 	printf "your are not root user. To proceed run\nsudo ./setup.sh\n"
@@ -52,12 +52,12 @@ fi
 if ! [ -f  "./layer.tar" ]; then
   proc="$(uname -m)"
   printf "Select Base Image\n"
-  printf "1 - Fedora 34\n" 
+  printf "1 - Fedora 35\n" 
   printf "2 - Centos 8\n"
   read -e -p "Enter nummber: " -i "1" RELEASE
   case "${RELEASE}" in
 	"1")
-		page="https://fr2.rpmfind.net/linux/fedora/linux/releases/34/Container/${proc}/images/"
+		page="https://fr2.rpmfind.net/linux/fedora/linux/releases/35/Container/${proc}/images/"
 		image="$(curl -s $page | grep -e "Fedora-Container-Base-.*.tar.xz"|sed -e 's!^.*\(Fedora-Container-Base.*.tar.xz\).*$!\1!m')"
 		OS="Fedora"
 		;;
@@ -111,7 +111,7 @@ if ! [ -f  "${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem" ]; then
 		-keyout ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.key \
 		-out ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem \
 		-subj "/CN=CA Vaultwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; 
-		openssl req -nodes -newkey rsa:2048 -sha256 \
+		openssl req -nodes -newkey rsa:4096 -sha256 \
 		-keyout ${DATADIR}/vaultwarden/certs/vaultwarden.key \
 		-out ${DATADIR}/vaultwarden/certs/vaultwarden.csr \
 		-subj "/CN=${DOMAIN}/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder";
