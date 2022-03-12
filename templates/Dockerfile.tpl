@@ -1,6 +1,6 @@
 FROM scratch
 LABEL maintainer="szfd9g <szfd9g@live.fr>"                    
-ENV DISTTAG=f34container FGC=f34 FBR=f34 container=podman
+ENV DISTTAG=f35container FGC=f35 FBR=f35 container=podman
 ENV DNFOPTION="--setopt=install_weak_deps=False --nodocs"
 ENV DB_BACKUP ${DB_BACKUP}
 ENV LANG C.UTF8
@@ -88,20 +88,18 @@ RUN clear \
     && printf "Select Branch\n" \
     && git pull origin master \
     && printf "Select Version\n" \
-    && git checkout v2.25.0 \
+    && git checkout v2.26.1 \
     && printf "Update Web vault\n" \
     && git submodule update --recursive --init
 
 RUN printf "Apply patch\n" \
-    && curl -Lo v2.25.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.25.0.patch \
-    && chown vaultwarden:vaultwarden v2.25.0.patch \
-    && git apply v2.25.0.patch --reject
+    && curl -Lo v2.26.1.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.26.1.patch \
+    && chown vaultwarden:vaultwarden v2.26.1.patch \
+    && git apply v2.26.1.patch --reject
 
 RUN printf "NPM Compile\n" \
     && npm ci --legacy-peer-deps \
-    && npm audit fix --legacy-peer-deps || true \
     && npm run dist:oss:selfhost
-
 
 USER root
 WORKDIR /
@@ -142,9 +140,9 @@ RUN chmod -R 750 /usr/local/bin/vaultwarden /var/lib/vaultwarden/ \
 RUN clear \
     && printf  "Configure Appache\n" \
 COPY ./configurations/ssl.conf /etc/httpd/conf.d/ssl.conf
-COPY ./configurations/serveur-status.conf /etc/httpd/conf.d/serveur-status.conf
+COPY ./configurations/server-status.conf /etc/httpd/conf.d/server-status.conf
 COPY ./configurations/vhost.conf /etc/httpd/conf.d/vhost.conf
-RUN chmod 644 /etc/httpd/conf.d/{ssl.conf,vhost.conf,serveur-status.conf} \ 
+RUN chmod 644 /etc/httpd/conf.d/{ssl.conf,vhost.conf,server-status.conf} \ 
     && cp -a /tmp/vault/build/ /var/www/vault/ \
     && chown -R apache:apache /var/www/vault/ /var/lib/vaultwarden/logs/httpd
 
