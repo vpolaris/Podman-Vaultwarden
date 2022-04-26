@@ -86,7 +86,8 @@ you can access by default to the vault via
 https://vault.vaultwarden.lan
 or the domain name you provided
 
-[![N|Solid](https://github.com/vpolaris/Podman-Vaultwarden/blob/main/docs/vaultwarden_logon_screen.PNG)
+![image](https://user-images.githubusercontent.com/73080749/165287141-b1853ad7-7c95-43b5-bae5-74641607dc3f.png)
+
 
 ## Manage the container
 
