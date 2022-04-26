@@ -6,27 +6,27 @@
 This project want to build a podman container to host a complete solution of [Vaultwarden API][vaultwarden-rs] and a [Web vault][Web-vault]: interface. Which is proxified by an Apache web server and initialized by Systemd in a rootless environment.
 
 - Podman don't need a daemon to run a container 
+- Podman don'need root privileges run a container 
 - Vaultwarden API don't need to be register
 - Web vault can be accessed by mobile client or browser
 
 Make sure you can do the difference between the official clients and the Web Vault powered by Bitwarden Inc and the unofficial Vaultwarden API a fork written in Rust by his author Dani Garcia.
 
-+ Note :
-Due to new denomination of Vaultwarden, I changed named object accordingly.
-
 ## Features
 
-- Support Fedora 34 and CentOS 8 as image containers
+- Support Fedora 35 and CentOS 8 as image containers
 - Vaultwarden and the Web vault are built from sources
 - You can import your own certificates or create a self-signed set
 - Token and password are automatically generated
 - Full automation process
+- Automatic backup of database
+- Settings are preserved between each build
 
 Podman can be used in almost all modern Linux distribution even in [WSL2]. Fedora like (CentOS, Red Hat) or Debian like (Ubuntu, Raspian) are well supported. Running Vaultwarden with its own web server make this solution highly portable and secure because you can run the container without root privileges. System administrators will appreciate the fact that the two services will be handled by systemd with all the capabilities associate to this init manager
 
 > the main goal is to build from scratch all the stuff under you eyes.
 > we pull image container directly from well known repositories
-> https://fr2.rpmfind.net/linux/fedora/linux/releases/34/Container for Fedora
+> https://fr2.rpmfind.net/linux/fedora/linux/releases/35/Container for Fedora
 > https://cloud.centos.org/centos/8/ for CentOS8
 > clone sources from there git repositories
 > All tools are fresh installed
@@ -45,7 +45,6 @@ We use a number of open-source projects to work properly:
 - [node.js] - Node.js is a JavaScript runtime built on Chrome's V8 JavaScript engine.
 - [Sass] - Sass is the most mature, stable, and powerful professional grade CSS extension language in the world. 
 - [npm] - npm is the world's largest software registry.
-- [Gulp] A toolkit to automate & enhance your workflow
 
 And of course, This project itself is open source and located on GitHub.
 
@@ -62,7 +61,7 @@ If SELinux is active you need to check if **policycoreutils-python** package is 
 #### Built Process:
 ```sh
 git clone https://github.com/vpolaris/Podman-Bitwarden.git
-cd Podman-Bitwarden
+cd Podman-Vaultwarden
 chmod u+x setup.sh; sudo ./setup.sh
 ```
 
@@ -78,6 +77,7 @@ Answer the questions
 + Port number, 443 by default (https)
 + The tag version, this number will be append to the image name
 + Certificate, if you have a set of PEM certificates (CA and web server) and you want to use it to setup the apache server, answer yes and indicate their locations. Only useful to the first run as these certificates will be conserved between each build
++ Enable or disable database backup
 
 At the end of questions, you can start the process immediately or copy the information for a later usage
 
@@ -86,7 +86,7 @@ you can access by default to the vault via
 https://vault.vaultwarden.lan
 or the domain name you provided
 
-[![N|Solid](https://github.com/vpolaris/Podman-Bitwarden/blob/main/docs/vaultwarden_logon_screen.PNG)
+[![N|Solid](https://github.com/vpolaris/Podman-Vaultwarden/blob/main/docs/vaultwarden_logon_screen.PNG)
 
 ## Manage the container
 
@@ -244,7 +244,7 @@ On Linux Platform
 A valid response should be
 ```
 Ncat: Version 7.80 ( https://nmap.org/ncat )
-Ncat: Connected to 192.168.124.219:2443.
+Ncat: Connected to 192.168.xxx.xxx:2443.
 Ncat: 0 bytes sent, 0 bytes received in 0.01 seconds.
 ```
 In case of  failure
@@ -309,8 +309,8 @@ If something continue to goes wrong check also routing table and third party dev
 I found my inspiration from these web sites
 
 **For Vaultwarden and the vault combined**
-+ https://fiat-tux.fr/2019/01/14/installer-un-serveur-vaultwarden_rs/ 
-+ https://illuad.fr/2020/06/11/install-a-vaultwarden-rs-server.html
++ https://fiat-tux.fr/2019/01/14/installer-un-serveur-bitwarden_rs/ 
++ https://illuad.fr/2020/06/11/install-a-bitwarden-rs-server.html
 
 **Ressource Control Group and Timer**
 + https://medium.com/horrible-hacks/using-systemd-as-a-better-cron-a4023eea996d
@@ -323,7 +323,7 @@ AGPL-3.0 License
 
 [//]: # (These are reference links used in the body of this note and get stripped out when the markdown processor does its job. There is no need to format nicely because it shouldn't be seen. Thanks SO - http://stackoverflow.com/questions/4823468/store-comments-in-markdown-syntax)
 
-   [Web-vault]: https://vaultwarden.com/
+   [Web-vault]: https://bitwarden.com/
    [vaultwarden-rs]: <https://github.com/dani-garcia/vaultwarden/wiki>
    [gcc]: <https://gcc.gnu.org/>
    [npm]: <https://docs.npmjs.com/about-npm>
@@ -337,5 +337,4 @@ AGPL-3.0 License
    [@tjholowaychuk]: <http://twitter.com/tjholowaychuk>
    [express]: <http://expressjs.com>
    [AngularJS]: <http://angularjs.org>
-   [Gulp]: <http://gulpjs.com>
 

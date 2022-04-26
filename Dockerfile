@@ -2,7 +2,7 @@ FROM scratch
 LABEL maintainer="szfd9g <szfd9g@live.fr>"                    
 ENV DISTTAG=f35container FGC=f35 FBR=f35 container=podman
 ENV DNFOPTION="--setopt=install_weak_deps=False --nodocs"
-ENV DB_BACKUP ${DB_BACKUP}
+ENV DB_BACKUP enabled
 ENV LANG C.UTF8
 ENV TERM=xterm
 ARG admpass
@@ -153,7 +153,7 @@ RUN clear \
             openssl req -new -x509 -nodes -days 7300 -outform PEM -newkey rsa:4096 -sha256 \
             -keyout /home/admin/.ssl/CA-Vaultwarden.key \
             -out /home/admin/.ssl/CA-Vaultwarden.pem \
-            -subj "/CN=CA Vaultwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder" \
+            -subj "/CN=CA Vaultwarden/emailAddress=admin@vault.vaultwarden.lan/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder" \
             && cp /home/admin/.ssl/CA-Vaultwarden.* /var/lib/vaultwarden/certs; \
        else \
             cp /var/lib/vaultwarden/certs/CA-Vaultwarden.pem /home/admin/.ssl/CA-Vaultwarden.pem \
@@ -167,7 +167,7 @@ RUN if ! [ -f  "/var/lib/vaultwarden/certs/vaultwarden.pem" ]; then \
         openssl req -nodes -newkey rsa:2048 -sha256 \
         -keyout /etc/pki/tls/private/vaultwarden.key \
         -out /home/admin/.ssl/vaultwarden.csr \
-        -subj "/CN=${DOMAIN}/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder" \
+        -subj "/CN=vault.vaultwarden.lan/emailAddress=admin@vault.vaultwarden.lan/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder" \
         && cp /home/admin/.ssl/vaultwarden.csr /var/lib/vaultwarden/certs \
         && cp /etc/pki/tls/private/vaultwarden.key /var/lib/vaultwarden/certs \
     ;else \
@@ -209,7 +209,7 @@ COPY ./services/timer.conf /etc/systemd/system/dnf-automatic-install.timer.d
 RUN printf  "Install scripts\n" \
     && mkdir -m 700 -p /opt/scripts
 COPY ./scripts/sql.backup.py /opt/scripts/sql.backup.py
-RUN printf "DB_BACKUP=${DB_BACKUP}\n" > /opt/scripts/.env \
+RUN printf "DB_BACKUP=enabled\n" > /opt/scripts/.env \
     && chown -R vaultwarden: /opt/scripts \
     && chmod u+x /opt/scripts/sql.backup.py
 
@@ -234,8 +234,8 @@ RUN if ! [ -s /etc/pki/tls/certs/localhost.crt ]; then \
     ;fi
 
 #Used only if Dockerfile is not set by setup
-RUN if [ -z ${HTTPS} ]; then export HTTPS="443";fi
-EXPOSE ${HTTPS}
+RUN if [ -z 443 ]; then export HTTPS="443";fi
+EXPOSE 443
 
 #Clean up
 RUN clear \

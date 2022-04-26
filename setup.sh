@@ -5,11 +5,20 @@ DOMAIN="vault.vaultwarden.lan"
 HTTPS="443"
 DB_BACKUP="enabled"
 SSLSTORE="$HOME/.ssl"
-VERSION="1.00"
+VERSION="latest"
 
 if [ "${EUID}" -ne 0 ]; then 
 	printf "your are not root user. To proceed run\nsudo ./setup.sh\n"
 	exit 0
+fi
+
+if [ -f  "./.settings" ]; then
+    read -e -p "Do you want to load your settting ? (y|n) " -i "n" LOAD
+    if [ "${LOAD}" == "y" ]; then 
+        source ./.settings
+        ADMTKN=$(echo "${ADMTKN}"|openssl enc -d -base64)
+        ADMINPASS=$(echo "${ADMINPASS}"|openssl enc -d -base64)      
+    fi
 fi
 
 read -e -p "Enter ADMIN TOKEN:" -i "${ADMTKN}" ADMTKN
@@ -19,6 +28,7 @@ read -e -p "Enter https port number:" -i "${HTTPS}" HTTPS
 read -e -p "Enter tag version:" -i "${VERSION}" VERSION
 read -e -p "DB Backup (enabled/disabled):" -i "${DB_BACKUP}" DB_BACKUP
 read -e -p "Do you have certificates to push ? (y|n) " -i "n" CERTS
+
 case "${CERTS}" in
 	"y")
 	  read -e -p "Enter certificate location :" -i "${SSLSTORE}" SSLSTORE
@@ -52,12 +62,12 @@ fi
 if ! [ -f  "./layer.tar" ]; then
   proc="$(uname -m)"
   printf "Select Base Image\n"
-  printf "1 - Fedora 34\n" 
+  printf "1 - Fedora 35\n" 
   printf "2 - Centos 8\n"
   read -e -p "Enter nummber: " -i "1" RELEASE
   case "${RELEASE}" in
 	"1")
-		page="https://fr2.rpmfind.net/linux/fedora/linux/releases/34/Container/${proc}/images/"
+		page="https://fr2.rpmfind.net/linux/fedora/linux/releases/35/Container/${proc}/images/"
 		image="$(curl -s $page | grep -e "Fedora-Container-Base-.*.tar.xz"|sed -e 's!^.*\(Fedora-Container-Base.*.tar.xz\).*$!\1!m')"
 		OS="Fedora"
 		;;
@@ -111,7 +121,7 @@ if ! [ -f  "${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem" ]; then
 		-keyout ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.key \
 		-out ${DATADIR}/vaultwarden/certs/CA-Vaultwarden.pem \
 		-subj "/CN=CA Vaultwarden/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder"; 
-		openssl req -nodes -newkey rsa:2048 -sha256 \
+		openssl req -nodes -newkey rsa:4096 -sha256 \
 		-keyout ${DATADIR}/vaultwarden/certs/vaultwarden.key \
 		-out ${DATADIR}/vaultwarden/certs/vaultwarden.csr \
 		-subj "/CN=${DOMAIN}/emailAddress=admin@${DOMAIN}/C=FR/ST=IDF/L=Paris/O=Podman Inc/OU=Podman builder";
@@ -192,8 +202,11 @@ read -e -p "Enter your answer " -i "y" VALIDATE
 case "${VALIDATE}" in
 	"y")
 	printf "Executed Command :\n"
-	printf "sudo su - vaultwarden -c podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -f ${DATADIR}/project/Dockerfile\n"
-	sudo su - vaultwarden -c "podman build --squash-all -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -f ${DATADIR}/project/Dockerfile"
+	printf "sudo su - vaultwarden -c podman build -t ${TAGNAME} --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -f ${DATADIR}/project/Dockerfile\n"
+	sudo su - vaultwarden -c "podman build --squash-all -t ${TAGNAME} \
+        --build-arg admpass=${ADMINPASS} --build-arg OS=${OS} --build-arg HTTPS=${HTTPS} \
+        -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z \
+        -f ${DATADIR}/project/Dockerfile"
 	;;
 	"n")
 	printf "To launch your built run the following command :\n"
@@ -245,7 +258,12 @@ if [ -f  "${DATADIR}/vaultwarden/build.completed" ]; then
 	  MPORT="${HTTPS}"
 	fi
 	
-	sudo su - vaultwarden -c "podman run -d --replace --name vaultwarden -h vaultwarden.lan -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -p 0.0.0.0:${MPORT}:${HTTPS}/tcp localhost/${TAGNAME}"
+	sudo su - vaultwarden -c "podman run -d --replace --name vaultwarden -h vaultwarden.lan \
+         -v ${DATADIR}/vaultwarden:/var/lib/vaultwarden:Z -p 0.0.0.0:${MPORT}:${HTTPS}/tcp \
+        --health-cmd \"CMD-SHELL curl -LIk https://${DOMAIN}:${MPORT}/alive -o /dev/null -w '%{http_code}\n' -s | grep 200 || exit 1\" \
+        --health-interval 15m \
+        --health-start-period 2m \
+        localhost/${TAGNAME}"
 	
 	printf "Generating systemd service file\n"
 	if [ -f  "${HOMEDIR}/container-vaultwarden.service" ]; then
@@ -264,3 +282,16 @@ else
 	printf "Something goes wrong during build operation ${TAGNAME}\n"
 fi
 usermod -s /sbin/nologin vaultwarden
+
+read -e -p "Do you want to save your settting ? (y|n) " -i "n" SAVE
+if [ "${SAVE}" == "y" ]; then 
+cat <<EOF > ./.settings
+ADMTKN=$(echo -n "${ADMTKN}"|openssl enc -base64)
+ADMINPASS=$(echo -n "${ADMINPASS}"|openssl enc -base64)
+DOMAIN="${DOMAIN}"
+HTTPS="${HTTPS}"
+DB_BACKUP="${DB_BACKUP}"
+SSLSTORE="${SSLSTORE}"
+VERSION="${VERSION}"
+EOF
+fi

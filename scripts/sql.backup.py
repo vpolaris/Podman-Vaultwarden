@@ -7,7 +7,11 @@
 
 import sqlite3
 import io
-import os, sys, shutil, gzip
+import glob
+import os
+import sys
+import shutil
+import tarfile
 from datetime import datetime
 
 status = os.getenv('DB_BACKUP')
@@ -15,28 +19,41 @@ if status=='disabled':
     print('DB Backup is disabled ')
     sys.exit(0)
 
+# DB_PATH='/var/lib/vaultwarden/data'
+DB_PATH='/home/vaultwarden/.persistent_storage/vaultwarden/data'
+# BKP_PATH='/var/lib/vaultwarden/backup'
+BKP_PATH='/home/vaultwarden/.persistent_storage/vaultwarden/backup'
 if status=='enabled':    
     myday=(datetime.today().weekday())
 
 
-    filename='/var/lib/vaultwarden/backup/database_dump-'+str(myday)
+    filename=BKP_PATH+'/database_dump-'+str(myday)
+    print(filename+".tar.gz")
 
-    if os.path.exists(filename+".gz"):
-        os.remove(filename+".gz")
+    if os.path.exists(filename+".tar.gz"):
+        os.remove(filename+".tar.gz")
 
     #https://www.geeksforgeeks.org/how-to-create-a-backup-of-a-sqlite-database-using-python/
-    conn = sqlite3.connect('/var/lib/vaultwarden/data/db.sqlite3')
+    conn = sqlite3.connect(DB_PATH+'/db.sqlite3')
     with io.open(filename+'.sql', 'w') as p:
         for line in conn.iterdump():
             p.write('%s\n' % line)
-    p.close
+    p.close()
     conn.close()
+    
+    #Get rsa_key files listing_
+    bkp_files=[]
+    bkp_files.extend(glob.glob(DB_PATH+"/rsa_key*"))
+    bkp_files.append(filename+'.sql')
+    
 
-    #https://towardsdatascience.com/all-the-ways-to-compress-and-archive-files-in-python-e8076ccedb4b
-
-    with open(filename+'.sql', "rb") as fin, gzip.open(f''+filename+'.gz', "wb") as fout:
-        # Reads the file by chunks to avoid exhausting memory
-        shutil.copyfileobj(fin, fout)
+    with tarfile.open(filename+'.tar.gz', "x:gz") as fout:
+        for file in bkp_files:
+            with open(file, "r") as fin:
+                # Reads the file by chunks to avoid exhausting memory
+                fout.addfile(tarfile.TarInfo(file))
+            fin.close()
+    fout.close()
         
     if os.path.exists(filename+".sql"):
         os.remove(filename+".sql")
