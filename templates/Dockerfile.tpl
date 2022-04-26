@@ -88,14 +88,24 @@ RUN clear \
     && printf "Select Branch\n" \
     && git pull origin master \
     && printf "Select Version\n" \
+<<<<<<< HEAD
     && git checkout v2.28.0 \
+=======
+    && git checkout v2.26.1 \
+>>>>>>> d01511f321df7322655575cfe9f26735cf3db889
     && printf "Update Web vault\n" \
     && git submodule update --recursive --init
 
 RUN printf "Apply patch\n" \
+<<<<<<< HEAD
     && curl -Lo v2.28.0.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.28.0.patch \
     && chown vaultwarden:vaultwarden v2.28.0.patch \
     && git apply v2.28.0.patch --reject
+=======
+    && curl -Lo v2.26.1.patch -sSf https://raw.githubusercontent.com/dani-garcia/bw_web_builds/master/patches/v2.26.1.patch \
+    && chown vaultwarden:vaultwarden v2.26.1.patch \
+    && git apply v2.26.1.patch --reject
+>>>>>>> d01511f321df7322655575cfe9f26735cf3db889
 
 RUN printf "NPM Compile\n" \
     && npm ci --legacy-peer-deps \
