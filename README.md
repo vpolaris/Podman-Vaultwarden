@@ -60,7 +60,7 @@ If SELinux is active you need to check if **policycoreutils-python** package is 
 
 #### Built Process:
 ```sh
-git clone https://github.com/vpolaris/Podman-Bitwarden.git
+git clone https://github.com/vpolaris/Podman-Vaultwarden.git
 cd Podman-Vaultwarden
 chmod u+x setup.sh; sudo ./setup.sh
 ```
